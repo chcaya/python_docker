@@ -1,0 +1,11 @@
+{
+  "name": "Python Development Environment",
+  "runArgs": [
+    "--privileged",
+    "--network=host",
+  ],
+  "build": {
+      "dockerfile": "Dockerfile",
+      "context": "."
+  }
+}
