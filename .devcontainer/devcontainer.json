@@ -4,6 +4,8 @@
     "--privileged",
     "--network=host",
   ],
+  "workspaceFolder": "/home/docker/python_docker/",
+  "workspaceMount": "source=${localEnv:HOME}/python_docker/,target=/home/docker/python_docker/,type=bind",
   "build": {
       "dockerfile": "Dockerfile",
       "context": "."
