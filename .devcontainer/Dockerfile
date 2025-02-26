@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ghcr.io/osgeo/gdal:ubuntu-small-latest
 
 # Add ubuntu user with same UID and GID as your host system, if it doesn't already exist
 # Since Ubuntu 24.04, a non-root user is created by default with the name vscode and UID=1000
@@ -29,3 +29,7 @@ RUN sudo apt-get update && \
 ARG WS=/home/$USERNAME/python_docker/
 
 WORKDIR $WS
+
+RUN pip install GDAL=3.10.2 && \
+    pip install torch torchvision torchaudio && \
+    pip install git+https://github.com/PatBall1/detectree2.git
