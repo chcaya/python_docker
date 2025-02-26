@@ -24,8 +24,8 @@ ARG WS=/home/$USERNAME/python_docker/
 #DeepForest
 WORKDIR $WS
 
-RUN apt-get update -y && \
-    apt-get install -y \
+RUN sudo apt-get update -y && \
+    sudo apt-get install -y \
     libgl1
 
 RUN git clone https://github.com/weecology/DeepForest.git
