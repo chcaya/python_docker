@@ -18,3 +18,19 @@ RUN apt-get update && \
 
 # Switch from root to user
 USER $USERNAME
+
+ARG WS=/home/$USERNAME/python_docker/
+
+#DeepForest
+WORKDIR $WS
+
+RUN apt-get update -y && \
+    apt-get install -y \
+    libgl1
+
+RUN git clone https://github.com/weecology/DeepForest.git
+
+WORKDIR $WS/DeepForest/
+RUN pip install --upgrade pip && \
+    pip install -r dev_requirements.txt && \
+    pip install -e .
