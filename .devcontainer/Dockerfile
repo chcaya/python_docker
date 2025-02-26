@@ -19,8 +19,12 @@ RUN apt-get update && \
 # Switch from root to user
 USER $USERNAME
 
-# Install Python and pip
-RUN sudo apt-get update && sudo apt-get install -y python3 python3-pip
+# Install Python essentials
+RUN sudo apt-get update && \
+    sudo apt-get install -y \
+    git \
+    python3 \
+    python3-pip
 
 ARG WS=/home/$USERNAME/python_docker/
 
