@@ -2,7 +2,7 @@
   "name": "Python Development Environment",
   "runArgs": [
     "--privileged",
-    "--network=host",
+    "--network=host"
   ],
   "workspaceFolder": "/home/docker/python_docker/",
   "workspaceMount": "source=${localEnv:HOME}/python_docker/,target=/home/docker/python_docker/,type=bind",

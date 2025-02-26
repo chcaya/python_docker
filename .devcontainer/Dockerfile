@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM ubuntu:22.04
 
 # Add ubuntu user with same UID and GID as your host system, if it doesn't already exist
 # Since Ubuntu 24.04, a non-root user is created by default with the name vscode and UID=1000
@@ -18,3 +18,10 @@ RUN apt-get update && \
 
 # Switch from root to user
 USER $USERNAME
+
+# Install Python and pip
+RUN sudo apt-get update && sudo apt-get install -y python3 python3-pip
+
+ARG WS=/home/$USERNAME/python_docker/
+
+WORKDIR $WS
