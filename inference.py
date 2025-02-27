@@ -8,6 +8,7 @@ model = main.deepforest()
 # Load a pretrained tree detection model from Hugging Face
 model.load_model(model_name="weecology/deepforest-tree", revision="main")
 
-sample_image_path = get_data("OSBS_029.png")
+# sample_image_path = get_data("OSBS_029.png")
+sample_image_path = get_data("/home/docker/python_docker/scaned_img.png")
 img = model.predict_image(path=sample_image_path)
 plot_results(img)
