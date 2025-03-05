@@ -33,4 +33,7 @@ RUN git clone https://github.com/weecology/DeepForest.git
 WORKDIR $WS/DeepForest/
 RUN pip install --upgrade pip && \
     pip install -r dev_requirements.txt && \
-    pip install -e .
+    pip install -e . && \
+    pip install imagecodecs && \
+    pip install tifffile && \
+    pip install rasterio
