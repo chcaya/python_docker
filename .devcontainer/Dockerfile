@@ -29,3 +29,6 @@ RUN sudo apt-get update && \
 ARG WS=/home/$USERNAME/python_docker/
 
 WORKDIR $WS
+RUN sudo apt-get update && sudo apt-get install -y python3-tk
+RUN pip install ardupilot_log_reader && \
+    pip install matplotlib
