@@ -50,12 +50,12 @@ def find_closest_timestamps_idx(_input_timestamps, _timestamps_list):
 
 
 ### Extract and print logs ###
-type_request = ['RCIN', 'IMU', 'GPS', 'BARO', 'MODE', 'MAG']
+type_request = ['RCIN', 'IMU', 'POS', 'BARO', 'MODE', 'MAG']
 output = Ardupilot.parse(Path(__file__).parent / 'log_1_2025-3-6-15-17-46.bin', types=type_request, zero_time_base=True)
 print(str(output.dfs['RCIN']['C5']))
 print(str(output.dfs['RCIN']['C6']))
 print(str(output.dfs['IMU']))
-print(str(output.dfs['GPS']))
+print(str(output.dfs['POS']))
 print(str(output.dfs['MAG']))
 
 
@@ -68,15 +68,15 @@ THRESHOLD = 1200
 landing_timestamps_s = extract_rising_edges(rcin_timestamps, c5, THRESHOLD)
 landing_timestamps_f = extract_rising_edges(rcin_timestamps, c6, THRESHOLD)
 
-gps_timestamps = output.dfs['GPS']['timestamp'].to_list()
-gps_idx_list_s = find_closest_timestamps_idx(landing_timestamps_s, gps_timestamps)
-gps_idx_list_f = find_closest_timestamps_idx(landing_timestamps_f, gps_timestamps)
+POS_timestamps = output.dfs['POS']['timestamp'].to_list()
+POS_idx_list_s = find_closest_timestamps_idx(landing_timestamps_s, POS_timestamps)
+POS_idx_list_f = find_closest_timestamps_idx(landing_timestamps_f, POS_timestamps)
 
-latitudes_s = output.dfs['GPS']['Lat'][gps_idx_list_s].to_list()
-longitudes_s = output.dfs['GPS']['Lng'][gps_idx_list_s].to_list()
+latitudes_s = output.dfs['POS']['Lat'][POS_idx_list_s].to_list()
+longitudes_s = output.dfs['POS']['Lng'][POS_idx_list_s].to_list()
 
-latitudes_f = output.dfs['GPS']['Lat'][gps_idx_list_f].to_list()
-longitudes_f = output.dfs['GPS']['Lng'][gps_idx_list_f].to_list()
+latitudes_f = output.dfs['POS']['Lat'][POS_idx_list_f].to_list()
+longitudes_f = output.dfs['POS']['Lng'][POS_idx_list_f].to_list()
 
 
 ### Figures ###
@@ -90,19 +90,19 @@ plt.title('Button inputs')
 
 plt.figure()
 plt.subplot(1, 2, 1)
-plt.plot(output.dfs['GPS']['timestamp'].to_numpy(), output.dfs['GPS']['Lat'].to_numpy(), color='r', label='Lat')
-plt.plot(output.dfs['GPS']['timestamp'].to_numpy(), output.dfs['GPS']['Lng'].to_numpy(), color='g', label='Lng')
+plt.plot(output.dfs['POS']['timestamp'].to_numpy(), output.dfs['POS']['Lat'].to_numpy(), color='r', label='Lat')
+plt.plot(output.dfs['POS']['timestamp'].to_numpy(), output.dfs['POS']['Lng'].to_numpy(), color='g', label='Lng')
 plt.xlabel("Time (sec)")
-plt.ylabel("GPS")
+plt.ylabel("POS")
 plt.legend()
 plt.title('Lattitude and Longitude')
 
 plt.subplot(1, 2, 2)
-plt.plot(output.dfs['GPS']['timestamp'].to_numpy(), output.dfs['GPS']['Alt'].to_numpy(), color='b', label='Alt')
+plt.plot(output.dfs['POS']['timestamp'].to_numpy(), output.dfs['POS']['Alt'].to_numpy(), color='b', label='Alt')
 plt.xlabel("Time (sec)")
 plt.ylabel("Altitude (cm)")
 plt.legend()
-plt.title('GPS Altitude')
+plt.title('POS Altitude')
 
 plt.figure()
 plt.plot(latitudes_s, longitudes_s, marker='o', linestyle='none', color='g', label='Success')
