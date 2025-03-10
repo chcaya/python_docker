@@ -28,9 +28,17 @@ RUN sudo apt-get update && \
 
 ARG WS=/home/$USERNAME/python_docker/
 
+### ArduPilot logs
 WORKDIR $WS
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV TZ="America/New_York"
 RUN sudo -E apt-get update -y && sudo -E apt-get install -y python3-tk
 RUN pip install ardupilot_log_reader && \
     pip install matplotlib
+
+### Open3d
+WORKDIR $WS
+RUN sudo apt-get update && sudo apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0
+RUN pip install open3d-cpu
