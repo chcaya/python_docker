@@ -35,7 +35,10 @@ _, _, meters_per_degree_lon = geod.inv(CENTER_LONG, CENTER_LAT, CENTER_LONG + 1,
 # Calculate meters per degree of latitude (change in latitude, keep longitude constant)
 _, _, meters_per_degree_lat = geod.inv(CENTER_LONG, CENTER_LAT, CENTER_LONG, CENTER_LAT + 1)
 
-print(f"Values: {image_width_meters}, {meters_per_degree_lon}, {image_height_meters}, {meters_per_degree_lat}")
+print(f"Image Width (meters): {image_width_meters:.2f}")
+print(f"Meters per Degree Longitude: {meters_per_degree_lon:.2f}")
+print(f"Image Height (meters): {image_height_meters:.2f}")
+print(f"Meters per Degree Latitude: {meters_per_degree_lat:.2f}")
 
 # Calculate the image dimensions in degrees
 image_width_degrees = image_width_meters / meters_per_degree_lon
@@ -79,34 +82,28 @@ print("Geo corners: " + str(corners_geo))
 top_left_lon = corners_geo[0][0]
 top_left_lat = corners_geo[0][1]
 
-# top_left_lon = (-image_width_meters / 2.0) / meters_per_degree_lon
-# top_left_lat = (image_height_meters / 2.0) / meters_per_degree_lat
-
-print(f"Values: {image_width_degrees}, {image_width_pixels}, {image_height_degrees}, {image_height_pixels}")
+print(f"Image Width (degrees): {image_width_degrees:.8f}")
+print(f"Image Width (pixels): {image_width_pixels:.8f}")
+print(f"Image Height (degrees): {image_height_degrees:.8f}")
+print(f"Image Height (pixels): {image_height_pixels:.8f}")
 
 # Calculate the pixel size in degrees
 pixel_size_x_degrees = image_width_degrees / image_width_pixels
-pixel_size_y_degrees = -image_height_degrees / image_height_pixels  # Negative because y-axis is flipped
+pixel_size_y_degrees = -image_height_degrees / image_height_pixels
 
-# Debugging: Print the pixel sizes
-print(f"Pixel size (X): {pixel_size_x_degrees:.8f} degrees")
-print(f"Pixel size (Y): {pixel_size_y_degrees:.8f} degrees")
-
-print(f"Values: {top_left_lon}, {top_left_lat}, {YAW}, {pixel_size_x_degrees}, {pixel_size_y_degrees}")
-# # Create the affine transformation matrix with rotation
-# transform = (
-#     Affine.translation(top_left_lon, top_left_lat) *
-#     Affine.rotation(YAW) *
-#     Affine.scale(pixel_size_x_degrees, pixel_size_y_degrees)
-# )
+print(f"Top-Left Longitude: {top_left_lon:.8f}")
+print(f"Top-Left Latitude: {top_left_lat:.8f}")
+print(f"YAW: {YAW:.8f}")
+print(f"Pixel Size (X, degrees): {pixel_size_x_degrees:.8f}")
+print(f"Pixel Size (Y, degrees): {pixel_size_y_degrees:.8f}")
 
 # Create the individual matrices
 translation_matrix = Affine.translation(top_left_lon, top_left_lat)
-rotation_matrix = Affine.rotation(math.degrees(YAW))
+rotation_matrix = Affine.rotation(-math.degrees(YAW)) # Cancels out the flipped Y axis (Mirrored image)
 scaling_matrix = Affine.scale(pixel_size_x_degrees, pixel_size_y_degrees)
 
 # Print the individual matrices
-print("Translation Matrix:")
+print("\nTranslation Matrix:")
 print(f"|{translation_matrix.a:.8f}, {translation_matrix.b:.8f}, {translation_matrix.c:.8f}|")
 print(f"|{translation_matrix.d:.8f}, {translation_matrix.e:.8f}, {translation_matrix.f:.8f}|")
 print(f"|{translation_matrix.g:.8f}, {translation_matrix.h:.8f}, {translation_matrix.i:.8f}|")
@@ -122,11 +119,12 @@ print(f"|{scaling_matrix.d:.8f}, {scaling_matrix.e:.8f}, {scaling_matrix.f:.8f}|
 print(f"|{scaling_matrix.g:.8f}, {scaling_matrix.h:.8f}, {scaling_matrix.i:.8f}|")
 
 # Combine the matrices
-transform = translation_matrix * rotation_matrix * scaling_matrix
+transform = translation_matrix * scaling_matrix * rotation_matrix
 
-print(f"Image transform: |{transform.a:.8f}, {transform.b:.8f}, {transform.c:.8f}|")
-print(f"                 |{transform.d:.8f}, {transform.e:.8f}, {transform.f:.8f}|")
-print(f"                 |{transform.g:.8f}, {transform.h:.8f}, {transform.i:.8f}|")
+print(f"\nImage transform:")
+print(f"|{transform.a:.8f}, {transform.b:.8f}, {transform.c:.8f}|")
+print(f"|{transform.d:.8f}, {transform.e:.8f}, {transform.f:.8f}|")
+print(f"|{transform.g:.8f}, {transform.h:.8f}, {transform.i:.8f}|")
 
 # Define the CRS (e.g., WGS84)
 crs = 'EPSG:4326'
