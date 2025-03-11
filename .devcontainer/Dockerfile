@@ -26,6 +26,18 @@ RUN sudo apt-get update && \
     python3 \
     python3-pip
 
+### Install Conda
+RUN sudo apt-get update && \
+    sudo apt-get install -y \
+    wget
+
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    sudo /bin/bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh && \
+    sudo sh -c 'echo "export PATH=/opt/conda/bin:$PATH" > /etc/profile.d/conda.sh' && \
+    sudo chown -R $USERNAME:$USERNAME /opt/conda
+ENV PATH=/opt/conda/bin:$PATH
+
 ARG WS=/home/$USERNAME/python_docker/
 
 ### ArduPilot logs tools
@@ -41,7 +53,15 @@ WORKDIR $WS
 RUN sudo apt-get update && sudo apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0
-RUN pip install open3d-cpu
+RUN pip install open3d-cpu && \
+    pip install laspy
+
+# PDAL
+RUN conda install -y pdal python-pdal gdal -c conda-forge && \
+    conda install -y libsqlite -c conda-forge --force-reinstall
+ENV GDAL_DATA=/opt/conda/share/gdal
+ENV PROJ_LIB=/opt/conda/share/proj
+
 
 ### RGB post process tools
 WORKDIR $WS
