@@ -14,6 +14,18 @@ from affine import Affine
 def compute_img_size(_fov, _height):
     return 2*_height*math.tan(math.radians(_fov/2.0))
 
+def get_meters_per_degree_at_coord(_coord_long, _coord_lat):
+    # Define the WGS84 ellipsoid
+    geod = Geod(ellps="WGS84")
+
+    # Calculate meters per degree of longitude (change in longitude, keep latitude constant)
+    _, _, meters_per_degree_lon = geod.inv(_coord_long, _coord_lat, _coord_long + 1, _coord_lat)
+
+    # Calculate meters per degree of latitude (change in latitude, keep longitude constant)
+    _, _, meters_per_degree_lat = geod.inv(_coord_long, _coord_lat, _coord_long, _coord_lat + 1)
+
+    return meters_per_degree_lon, meters_per_degree_lat
+
 HEIGHT = 65
 
 CAM_FOV_H = 87
@@ -26,14 +38,7 @@ YAW = math.radians(15)
 image_width_meters = compute_img_size(CAM_FOV_H, HEIGHT)
 image_height_meters = compute_img_size(CAM_FOV_V, HEIGHT)
 
-# Define the WGS84 ellipsoid
-geod = Geod(ellps="WGS84")
-
-# Calculate meters per degree of longitude (change in longitude, keep latitude constant)
-_, _, meters_per_degree_lon = geod.inv(CENTER_LONG, CENTER_LAT, CENTER_LONG + 1, CENTER_LAT)
-
-# Calculate meters per degree of latitude (change in latitude, keep longitude constant)
-_, _, meters_per_degree_lat = geod.inv(CENTER_LONG, CENTER_LAT, CENTER_LONG, CENTER_LAT + 1)
+meters_per_degree_lon, meters_per_degree_lat = get_meters_per_degree_at_coord(CENTER_LONG, CENTER_LAT)
 
 print(f"Image Width (meters): {image_width_meters:.2f}")
 print(f"Meters per Degree Longitude: {meters_per_degree_lon:.2f}")

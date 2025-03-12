@@ -53,8 +53,7 @@ WORKDIR $WS
 RUN sudo apt-get update && sudo apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0
-RUN pip install open3d-cpu && \
-    pip install laspy
+RUN pip install open3d-cpu
 
 # PDAL
 RUN conda install -y pdal python-pdal gdal -c conda-forge && \
@@ -65,4 +64,5 @@ ENV PROJ_LIB=/opt/conda/share/proj
 
 ### RGB post process tools
 WORKDIR $WS
-RUN pip install rasterio
+RUN pip install rasterio && \
+    pip install pyproj
