@@ -50,13 +50,14 @@ def find_closest_timestamps_idx(_input_timestamps, _timestamps_list):
 
 
 ### Extract and print logs ###
-type_request = ['RCIN', 'IMU', 'POS', 'BARO', 'MODE', 'MAG']
+type_request = ['RCIN', 'IMU', 'POS', 'BARO', 'MODE', 'MAG', 'XKF1']
 output = Ardupilot.parse(Path(__file__).parent / 'log_1_2025-3-6-15-17-46.bin', types=type_request, zero_time_base=True)
 print(str(output.dfs['RCIN']['C5']))
 print(str(output.dfs['RCIN']['C6']))
 print(str(output.dfs['IMU']))
 print(str(output.dfs['POS']))
 print(str(output.dfs['MAG']))
+print(str(output.dfs['XKF1']))
 
 
 ### Extract landing positions###
@@ -103,6 +104,22 @@ plt.xlabel("Time (sec)")
 plt.ylabel("Altitude (cm)")
 plt.legend()
 plt.title('POS Altitude')
+
+plt.figure()
+plt.subplot(1, 2, 1)
+plt.plot(output.dfs['XKF1']['timestamp'].to_numpy(), output.dfs['XKF1']['PN'].to_numpy(), color='r', label='North')
+plt.plot(output.dfs['XKF1']['timestamp'].to_numpy(), output.dfs['XKF1']['PE'].to_numpy(), color='g', label='East')
+plt.xlabel("Time (sec)")
+plt.ylabel("XKF1")
+plt.legend()
+plt.title('North and East')
+
+plt.subplot(1, 2, 2)
+plt.plot(output.dfs['XKF1']['timestamp'].to_numpy(), output.dfs['XKF1']['PD'].to_numpy(), color='b', label='Down')
+plt.xlabel("Time (sec)")
+plt.ylabel("Altitude (cm)")
+plt.legend()
+plt.title('XKF1 Altitude')
 
 plt.figure()
 plt.plot(latitudes_s, longitudes_s, marker='o', linestyle='none', color='g', label='Success')
