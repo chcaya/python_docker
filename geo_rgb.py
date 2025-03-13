@@ -75,9 +75,10 @@ CAM_FOV_H = 87
 # CAM_FOV_V = 58
 CAM_FOV_V = 48.9 # In sim
 
+# CENTER_LAT = 45.377789  # Latitude in degrees
+# CENTER_LONG = -71.940123  # Longitude in degrees
 CENTER_LAT = 45.3777901  # Latitude in degrees
 CENTER_LONG = -71.9401421  # Longitude in degrees
-# CENTER_LONG = -71.940125  # Longitude in degrees
 YAW = math.radians(5.605) - math.radians(90)
 
 image_width_meters = compute_img_size(CAM_FOV_H, HEIGHT)

@@ -104,14 +104,6 @@ pipeline_json = """
         "filename": "rtabmap_cloud.ply"
     },
     {
-        "type": "writers.las",
-        "a_srs": "EPSG:4326",
-        "filename": "input.las",
-        "scale_x":"0.0000001",
-        "scale_y":"0.0000001",
-        "scale_z":"0.0000001"
-    },
-    {
         "type": "filters.transformation",
         "matrix": "{MATRIX}"
     },
