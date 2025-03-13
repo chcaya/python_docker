@@ -72,8 +72,8 @@ HEIGHT = 65 # Max accuracy on tree
 # HEIGHT = 78 # Real height
 
 CAM_FOV_H = 87
-# CAM_FOV_V = 58
-CAM_FOV_V = 48.9 # In sim
+CAM_FOV_V = 58
+# CAM_FOV_V = 48.9 # In sim
 
 # CENTER_LAT = 45.377789  # Latitude in degrees
 # CENTER_LONG = -71.940123  # Longitude in degrees
@@ -117,7 +117,7 @@ corners_pixels_rotated = rotate_corners(corners_pixels, YAW)
 img_pix_x, img_pix_y = compute_bbox(corners_pixels_rotated)
 
 pixel_size_long = img_long/img_pix_x
-pixel_size_lat = img_lat/-img_pix_y # Invert y axis
+pixel_size_lat = img_lat/img_pix_y
 
 print("Geo corners: " + str(corners_geo))
 print(f"img_long: {img_long:.8f}")
@@ -133,8 +133,8 @@ print(f"Pixel Size (Long, degrees): {pixel_size_long:.8f}")
 print(f"Pixel Size (Lat, degrees): {pixel_size_lat:.8f}")
 
 translation_matrix = Affine.translation(top_left_lon, top_left_lat)
-scaling_matrix = Affine.scale(pixel_size_long, pixel_size_lat)
-rotation_matrix = Affine.rotation(-math.degrees(YAW))
+scaling_matrix = Affine.scale(pixel_size_long, -pixel_size_lat) # Invert y axis
+rotation_matrix = Affine.rotation(-math.degrees(YAW)) # Invert rotation because of inverted y axis
 transform = translation_matrix * scaling_matrix * rotation_matrix
 
 # Print the individual matrices
