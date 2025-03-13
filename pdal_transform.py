@@ -32,9 +32,13 @@ def affine2pdal(_affine):
     return " ".join(map(str, matrix_3d.flatten()))
 
 
+# ORIGIN_LAT = 45.3777769  # Latitude in degrees
+# ORIGIN_LONG = -71.9403259  # Longitude in degrees
+# YAW = math.radians(90) - math.radians(90)
+
 ORIGIN_LAT = 45.377777  # Latitude in degrees
 ORIGIN_LONG = -71.940326  # Longitude in degrees
-YAW = math.radians(15)
+YAW = math.radians(92.82) - math.radians(90)
 
 meters_per_degree_lon, meters_per_degree_lat = get_meters_per_degree_at_coord(ORIGIN_LONG, ORIGIN_LAT)
 
@@ -114,7 +118,7 @@ pipeline_json = """
     {
         "type": "writers.las",
         "a_srs": "EPSG:4326",
-        "filename": "output.las",
+        "filename": "output_sim.las",
         "scale_x":"0.0000001",
         "scale_y":"0.0000001",
         "scale_z":"0.0000001"
