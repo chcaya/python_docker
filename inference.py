@@ -49,8 +49,8 @@ model = main.deepforest()
 model.load_model(model_name="weecology/deepforest-tree", revision="main")
 
 # Tile pipeline from image
-downsampled_img = tif.imread('/home/docker/python_docker/images/stac/20240909_bcifairchild_m3e_rgb_downsampled.cog.tif')
-results = model.predict_tile(image=downsampled_img, patch_size=800, patch_overlap=0.25)
+# downsampled_img = tif.imread('/home/docker/python_docker/images/stac/20240909_bcifairchild_m3e_rgb_downsampled.cog.tif')
+# results = model.predict_tile(image=downsampled_img, patch_size=800, patch_overlap=0.25)
 # results.root_dir = '/home/docker/python_docker/output/'
 # results.image_path = '/home/docker/python_docker/images/stac/20240909_bcifairchild_m3e_rgb_downsampled.cog.tif'
 
@@ -59,10 +59,13 @@ results = model.predict_tile(image=downsampled_img, patch_size=800, patch_overla
 # results = model.predict_tile(image_path, patch_size=800, patch_overlap=0.25)
 # visualize.plot_results(results)
 
-# # Image pipeline from image
-# image_path = get_data("/home/docker/python_docker/images/stac/scaned_img_65m.png")
-# results = model.predict_image(image_path, patch_size=800, patch_overlap=0.25)
-# visualize.plot_results(results)
+# Image pipeline from image
+image_path = "/home/docker/python_docker/images/simulation/img_65m.png"
+img = cv2.imread(image_path)
+# results = model.predict_image(image=img)
+results = model.predict_tile(image=img, patch_size=800, patch_overlap=0.25)
+results.root_dir = '/home/docker/python_docker/output/'
+results.image_path = image_path
 
 # Finding the center of the biggest tree
 print('Results type: ' + str(type(results)))
@@ -78,4 +81,4 @@ center_y = int(results.loc[max_area_idx, "y"])
 print(results)
 print(f"Center of the Largest Bounding Box: ({center_x}, {center_y})")
 
-visualize.plot_results(results, image=downsampled_img)
+visualize.plot_results(results, image=cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
