@@ -5,6 +5,23 @@ import math
 import numpy as np
 import open3d as o3d
 
+input_file = 'rtabmap_cloud.ply'
+# input_file = 'landings_cloud.ply'
+
+output_file = 'output_sim.las'
+# output_file = 'landings.las'
+
+# rtabmap_cloud
+ORIGIN_LAT = 45.3777769  # Latitude in degrees
+ORIGIN_LONG = -71.9403259  # Longitude in degrees
+# YAW = math.radians(92.82) - math.radians(90)
+YAW = 0
+
+# landings_cloud
+# ORIGIN_LAT = 45.378541  # Latitude in degrees
+# ORIGIN_LONG = -71.942203  # Longitude in degrees
+# YAW = 0
+
 def get_meters_per_degree_at_coord(_coord_long, _coord_lat):
     # Define the WGS84 ellipsoid
     geod = Geod(ellps="WGS84")
@@ -30,15 +47,6 @@ def affine2pdal(_affine):
 
     # Flatten the matrix to a space-separated string for PDAL
     return " ".join(map(str, matrix_3d.flatten()))
-
-
-# ORIGIN_LAT = 45.3777769  # Latitude in degrees
-# ORIGIN_LONG = -71.9403259  # Longitude in degrees
-# YAW = math.radians(90) - math.radians(90)
-
-ORIGIN_LAT = 45.377777  # Latitude in degrees
-ORIGIN_LONG = -71.940326  # Longitude in degrees
-YAW = math.radians(92.82) - math.radians(90)
 
 meters_per_degree_lon, meters_per_degree_lat = get_meters_per_degree_at_coord(ORIGIN_LONG, ORIGIN_LAT)
 
@@ -101,7 +109,7 @@ pipeline_json = """
 [
     {
         "type": "readers.ply",
-        "filename": "rtabmap_cloud.ply"
+        "filename": "{INPUT}"
     },
     {
         "type": "filters.transformation",
@@ -110,7 +118,7 @@ pipeline_json = """
     {
         "type": "writers.las",
         "a_srs": "EPSG:4326",
-        "filename": "output_sim.las",
+        "filename": "{OUTPUT}",
         "scale_x":"0.0000001",
         "scale_y":"0.0000001",
         "scale_z":"0.0000001"
@@ -119,6 +127,8 @@ pipeline_json = """
 """
 
 # Replace the placeholder with the actual matrix
+pipeline_json = pipeline_json.replace("{INPUT}", input_file)
+pipeline_json = pipeline_json.replace("{OUTPUT}", output_file)
 pipeline_json = pipeline_json.replace("{MATRIX}", pdal_matrix)
 
 # Create the PDAL pipeline

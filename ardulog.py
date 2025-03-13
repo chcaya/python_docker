@@ -10,6 +10,8 @@ import numpy as np
 
 import bisect
 
+import open3d as o3d
+
 def extract_rising_edges(_timestamps, _signal, _threshold):
     rising_edges_timestamps = []
     is_rised = False
@@ -50,7 +52,7 @@ def find_closest_timestamps_idx(_input_timestamps, _timestamps_list):
 
 
 ### Extract and print logs ###
-type_request = ['RCIN', 'IMU', 'POS', 'BARO', 'MODE', 'MAG', 'XKF1']
+type_request = ['RCIN', 'IMU', 'POS', 'BARO', 'MODE', 'MAG', 'XKF1', 'ORGN']
 output = Ardupilot.parse(Path(__file__).parent / 'log_1_2025-3-6-15-17-46.bin', types=type_request, zero_time_base=True)
 print(str(output.dfs['RCIN']['C5']))
 print(str(output.dfs['RCIN']['C6']))
@@ -58,6 +60,7 @@ print(str(output.dfs['IMU']))
 print(str(output.dfs['POS']))
 print(str(output.dfs['MAG']))
 print(str(output.dfs['XKF1']))
+print(str(output.dfs['ORGN']))
 
 
 ### Extract landing positions###
@@ -75,9 +78,24 @@ POS_idx_list_f = find_closest_timestamps_idx(landing_timestamps_f, POS_timestamp
 
 latitudes_s = output.dfs['POS']['Lat'][POS_idx_list_s].to_list()
 longitudes_s = output.dfs['POS']['Lng'][POS_idx_list_s].to_list()
+altitudes_s = output.dfs['POS']['RelHomeAlt'][POS_idx_list_s].to_list()
 
 latitudes_f = output.dfs['POS']['Lat'][POS_idx_list_f].to_list()
 longitudes_f = output.dfs['POS']['Lng'][POS_idx_list_f].to_list()
+altitudes_f = output.dfs['POS']['RelHomeAlt'][POS_idx_list_f].to_list()
+
+
+XKF1_timestamps = output.dfs['XKF1']['timestamp'].to_list()
+XKF1_idx_list_s = find_closest_timestamps_idx(landing_timestamps_s, XKF1_timestamps)
+XKF1_idx_list_f = find_closest_timestamps_idx(landing_timestamps_f, XKF1_timestamps)
+
+x_s = output.dfs['XKF1']['PE'][XKF1_idx_list_s].to_list()
+y_s = output.dfs['XKF1']['PN'][XKF1_idx_list_s].to_list()
+relalt_s = output.dfs['XKF1']['PD'][XKF1_idx_list_s].to_list()
+
+x_f = output.dfs['XKF1']['PE'][XKF1_idx_list_f].to_list()
+y_f = output.dfs['XKF1']['PN'][XKF1_idx_list_f].to_list()
+relalt_f = output.dfs['XKF1']['PD'][XKF1_idx_list_f].to_list()
 
 
 ### Figures ###
@@ -129,4 +147,27 @@ plt.ylabel("Longitude")
 plt.legend()
 plt.title('Landings')
 
-plt.show()
+# plt.show()
+
+# Combine latitude, longitude, and altitude into 3D points
+points_s = np.column_stack((x_s, y_s, relalt_s))  # Green points
+points_f = np.column_stack((x_f, y_f, relalt_f))  # Red points
+
+# Create an Open3D point cloud
+point_cloud = o3d.geometry.PointCloud()
+
+# Add points to the point cloud
+point_cloud.points = o3d.utility.Vector3dVector(np.vstack((points_s, points_f)))
+
+# Assign colors: green for points_s, red for points_f
+colors = np.vstack((
+    np.tile([0, 1, 0], (len(points_s), 1)),  # Green for points_s
+    np.tile([1, 0, 0], (len(points_f), 1))   # Red for points_f
+))
+point_cloud.colors = o3d.utility.Vector3dVector(colors)
+
+# Visualize the point cloud
+# o3d.visualization.draw_geometries([point_cloud])
+
+output_file = "landings_cloud.ply"
+o3d.io.write_point_cloud(output_file, point_cloud)
