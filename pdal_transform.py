@@ -64,15 +64,15 @@ max_x, max_y = np.max(points[:, 0]), np.max(points[:, 1])
 x_dimension = max_x - min_x
 y_dimension = max_y - min_y
 
+# Create the individual matrices
+translation_matrix = Affine.translation(ORIGIN_LONG, ORIGIN_LAT)
+scaling_matrix = Affine.scale(1/meters_per_degree_lon, 1/meters_per_degree_lat)
+rotation_matrix = Affine.rotation(math.degrees(YAW)) # Cancels out the flipped Y axis (Mirrored image)
+transform = translation_matrix * scaling_matrix * rotation_matrix
+
 # Print the results
 print(f"X Dimension (Width): {x_dimension:.8f} units")
 print(f"Y Dimension (Height): {y_dimension:.8f} units")
-
-# Create the individual matrices
-translation_matrix = Affine.translation(ORIGIN_LONG, ORIGIN_LAT)
-rotation_matrix = Affine.rotation(math.degrees(YAW)) # Cancels out the flipped Y axis (Mirrored image)
-scaling_matrix = Affine.scale(1/meters_per_degree_lon, 1/meters_per_degree_lat)
-
 print(f"meters_per_degree_lon: {meters_per_degree_lon:.10f}")
 print(f"meters_per_degree_lat: {meters_per_degree_lat:.10f}")
 print(f"1/meters_per_degree_lon: {1/meters_per_degree_lon:.10f}")
@@ -93,9 +93,6 @@ print("\nScaling Matrix:")
 print(f"|{scaling_matrix.a:.8f}, {scaling_matrix.b:.8f}, {scaling_matrix.c:.8f}|")
 print(f"|{scaling_matrix.d:.8f}, {scaling_matrix.e:.8f}, {scaling_matrix.f:.8f}|")
 print(f"|{scaling_matrix.g:.8f}, {scaling_matrix.h:.8f}, {scaling_matrix.i:.8f}|")
-
-# Combine the matrices
-transform = translation_matrix * scaling_matrix * rotation_matrix
 
 print(f"\nImage transform:")
 print(f"|{transform.a:.8f}, {transform.b:.8f}, {transform.c:.8f}|")
