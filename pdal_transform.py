@@ -36,10 +36,10 @@ def get_meters_per_degree_at_coord(_coord_long, _coord_lat):
 
 def affine2pdal(_affine):
     # Convert the affine matrix to a 4x4 matrix for PDAL
-    _affine = np.array(transform).reshape(3, 3)
+    affine_np = np.array(_affine).reshape(3, 3)
     matrix_3d = np.eye(4)  # Create a 4x4 identity matrix
-    matrix_3d[:2, :2] = _affine[:2, :2]  # Copy rotation and scaling
-    matrix_3d[:2, 3] = _affine[:2, 2]    # Copy translation
+    matrix_3d[:2, :2] = affine_np[:2, :2]  # Copy rotation and scaling
+    matrix_3d[:2, 3] = affine_np[:2, 2]    # Copy translation
 
     print("\nTransformation Matrix:")
     for row in matrix_3d:
@@ -67,7 +67,7 @@ y_dimension = max_y - min_y
 # Create the individual matrices
 translation_matrix = Affine.translation(ORIGIN_LONG, ORIGIN_LAT)
 scaling_matrix = Affine.scale(1/meters_per_degree_lon, 1/meters_per_degree_lat)
-rotation_matrix = Affine.rotation(math.degrees(YAW)) # Cancels out the flipped Y axis (Mirrored image)
+rotation_matrix = Affine.rotation(math.degrees(YAW))
 transform = translation_matrix * scaling_matrix * rotation_matrix
 
 # Print the results
