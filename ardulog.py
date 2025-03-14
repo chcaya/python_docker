@@ -11,6 +11,8 @@ import numpy as np
 import bisect
 
 import open3d as o3d
+import laspy
+
 
 def extract_rising_edges(_timestamps, _signal, _threshold):
     rising_edges_timestamps = []
@@ -149,25 +151,60 @@ plt.title('Landings')
 
 # plt.show()
 
-# Combine latitude, longitude, and altitude into 3D points
-points_s = np.column_stack((x_s, y_s, relalt_s))  # Green points
-points_f = np.column_stack((x_f, y_f, relalt_f))  # Red points
+# # Combine latitude, longitude, and altitude into 3D points
+# points_s = np.column_stack((x_s, y_s, relalt_s))  # Green points
+# points_f = np.column_stack((x_f, y_f, relalt_f))  # Red points
 
-# Create an Open3D point cloud
-point_cloud = o3d.geometry.PointCloud()
+# # Create an Open3D point cloud
+# point_cloud = o3d.geometry.PointCloud()
 
-# Add points to the point cloud
-point_cloud.points = o3d.utility.Vector3dVector(np.vstack((points_s, points_f)))
+# # Add points to the point cloud
+# point_cloud.points = o3d.utility.Vector3dVector(np.vstack((points_s, points_f)))
 
-# Assign colors: green for points_s, red for points_f
-colors = np.vstack((
-    np.tile([0, 1, 0], (len(points_s), 1)),  # Green for points_s
-    np.tile([1, 0, 0], (len(points_f), 1))   # Red for points_f
-))
-point_cloud.colors = o3d.utility.Vector3dVector(colors)
+# # Assign colors: green for points_s, red for points_f
+# colors = np.vstack((
+#     np.tile([0, 1, 0], (len(points_s), 1)),  # Green for points_s
+#     np.tile([1, 0, 0], (len(points_f), 1))   # Red for points_f
+# ))
+# point_cloud.colors = o3d.utility.Vector3dVector(colors)
 
-# Visualize the point cloud
-# o3d.visualization.draw_geometries([point_cloud])
+# # Visualize the point cloud
+# # o3d.visualization.draw_geometries([point_cloud])
 
-output_file = "landings_cloud.ply"
-o3d.io.write_point_cloud(output_file, point_cloud)
+# output_file = "landings_cloud.ply"
+# o3d.io.write_point_cloud(output_file, point_cloud)
+
+
+# Combine the data into a single array
+latitudes = np.array(latitudes_s + latitudes_f)
+longitudes = np.array(longitudes_s + longitudes_f)
+altitudes = np.array(altitudes_s + altitudes_f)
+
+# Create RGB colors (green for 's', red for 'f')
+red = np.array([255, 0, 0])  # Red
+green = np.array([0, 255, 0])  # Green
+
+# Create an array for colors
+colors = np.vstack([
+    np.tile(green, (len(latitudes_s), 1)),  # Green for 's'
+    np.tile(red, (len(latitudes_f), 1))     # Red for 'f'
+])
+
+# Create a new LAS file
+header = laspy.LasHeader(version="1.4", point_format=7)  # Point format 7 supports RGB
+header.scale = (0.0000001, 0.0000001, 0.0000001)  # Scale for x, y, z
+las = laspy.LasData(header)
+
+# Assign coordinates and colors
+las.x = longitudes
+las.y = latitudes
+las.z = altitudes
+
+las.red = colors[:, 0]
+las.green = colors[:, 1]
+las.blue = colors[:, 2]
+
+# Save the LAS file
+las.write("landings.las")
+
+print("LAS file created successfully!")
