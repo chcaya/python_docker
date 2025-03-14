@@ -35,6 +35,8 @@ def build_affines(_org_x, _org_y, _scale_x, _scale_y, _yaw):
     invert_translation_matrix = Affine.translation(-_org_x, -_org_y)
     invert_transform = invert_rotation_matrix * invert_scaling_matrix * invert_translation_matrix
 
+    # transform = local to global
+    # invert_transform = global to local
     return transform, invert_transform
 
 def affine_to_3d(_affine):
@@ -48,8 +50,6 @@ def affine_to_3d(_affine):
     for row in matrix_3d:
         print(f"|{row[0]:.8f}, {row[1]:.8f}, {row[2]:.8f}, {row[3]:.8f}|")
 
-    # Flatten the matrix to a space-separated string for PDAL
-    # return " ".join(map(str, matrix_3d.flatten()))
     return matrix_3d
 
 meters_per_degree_lon, meters_per_degree_lat = get_meters_per_degree_at_coord(ORIGIN_LONG, ORIGIN_LAT)
