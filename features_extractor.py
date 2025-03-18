@@ -202,7 +202,7 @@ home_longitude=-71.9403259
 landing_latitude=45.3778108
 landing_longitude=-71.940128
 
-point_cloud = o3d.io.read_point_cloud("rtabmap_cloud.ply")
+point_cloud = o3d.io.read_point_cloud("inputs/rtabmap_cloud.ply")
 
 if not point_cloud.has_normals():
     print("Computing normals")
@@ -215,6 +215,7 @@ highest_point = get_highest_point(point_cloud)
 
 # Assign the z value of the highest point to the center point
 center_point[2] = highest_point[2]  # Update the z coordinate
+print(center_point)
 
 # Downsample using a voxel grid
 voxel_size = 0.1  # Size of the voxel (adjust based on your data)

@@ -57,13 +57,14 @@ RUN pip install ardupilot_log_reader && \
 
 ### PC post process tools
 WORKDIR $WS
+RUN sudo apt-get update && \
+    sudo apt install -y \
+    libpcl-dev
 RUN sudo apt-get update && sudo apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0
 RUN pip install open3d-cpu
-RUN sudo apt-get update && \
-    sudo apt install -y \
-    libpcl-dev
+ENV XDG_SESSION_TYPE=x11
 
 # PDAL
 RUN conda install -y pdal python-pdal gdal -c conda-forge && \
