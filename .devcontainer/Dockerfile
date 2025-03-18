@@ -61,6 +61,9 @@ RUN sudo apt-get update && sudo apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0
 RUN pip install open3d-cpu
+RUN sudo apt-get update && \
+    sudo apt install -y \
+    libpcl-dev
 
 # PDAL
 RUN conda install -y pdal python-pdal gdal -c conda-forge && \

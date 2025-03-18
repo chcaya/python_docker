@@ -9,7 +9,15 @@
                 "-g",
                 "${file}",
                 "-o",
-                "${workspaceFolder}/build/${fileBasenameNoExtension}"
+                "${workspaceFolder}/build/${fileBasenameNoExtension}",
+                "-I/usr/include/eigen3",    // Eigen include path
+                "-I/usr/include/pcl-1.12",  // PCL include path
+                "-I/usr/include/vtk-9.1",   // VTK 9 include path
+                "-Wl,--copy-dt-needed-entries",
+                "-lpcl_io",
+                "-lpcl_common",
+                "-lpcl_visualization",
+                "-lvtkCommonCore-9.1"       // VTK library
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
