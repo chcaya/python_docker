@@ -8,6 +8,8 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/surface/mls.h>
+#include <pcl/common/centroid.h>
+#include <pcl/common/pca.h>
 
 #include <pcl/visualization/pcl_visualizer.h> // For visualization (optional)
 
@@ -221,6 +223,134 @@ void smoothPC(pcl::PointCloud<pcl::PointXYZRGB>& _pointCloud, const float _searc
     pcl::copyPointCloud(mls_points, _pointCloud);
 }
 
+float computeDensity(const pcl::PointCloud<pcl::PointXYZRGB>& _cloud, float _radius) {
+    // Compute the volume of the sphere
+    float volume = (4.0f / 3.0f) * M_PI * std::pow(_radius, 3);
+
+    // Compute the density
+    float density = _cloud.points.size() / volume;
+
+    std::cout << "Density: " << density << std::endl;
+    return density;
+}
+
+// Eigen::Vector3f computeCurvature(const pcl::PointCloud<pcl::Normal>& _normals) {
+//     // Compute normals (required for curvature estimation)
+//     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+//     pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> normal_estimator;
+//     normal_estimator.setInputCloud(cloud);
+//     normal_estimator.setKSearch(10); // Use 10 nearest neighbors to estimate normals
+//     normal_estimator.compute(*normals);
+
+//     // Create a PrincipalCurvaturesEstimation object
+//     pcl::PrincipalCurvaturesEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::PrincipalCurvatures> curvature_estimator;
+
+//     // Set the input cloud and normals
+//     curvature_estimator.setInputCloud(cloud);
+//     curvature_estimator.setInputNormals(normals);
+
+//     // Set the search method (e.g., KdTree)
+//     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+//     curvature_estimator.setSearchMethod(tree);
+
+//     // Set the radius for curvature estimation
+//     curvature_estimator.setRadiusSearch(0.03); // Use a radius of 0.03 meters
+
+//     // Compute the principal curvatures
+//     pcl::PointCloud<pcl::PrincipalCurvatures>::Ptr curvatures(new pcl::PointCloud<pcl::PrincipalCurvatures>);
+//     curvature_estimator.compute(*curvatures);
+
+//     // Print the results
+//     for (size_t i = 0; i < curvatures->size(); ++i) {
+//         const auto& curvature = curvatures->points[i];
+//         std::cout << "Point " << i << ":\n";
+//         std::cout << "  Principal Curvatures: " << curvature.pc1 << ", " << curvature.pc2 << "\n";
+//         std::cout << "  Principal Directions: (" << curvature.principal_curvature_x << ", "
+//                   << curvature.principal_curvature_y << ", " << curvature.principal_curvature_z << ")\n";
+//     }
+// }
+
+Eigen::Vector4f computePlane(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr _cloud){
+    // Compute the centroid of the point cloud
+    Eigen::Vector4f centroid;
+    pcl::compute3DCentroid(*_cloud, centroid);
+
+    // Perform PCA
+    pcl::PCA<pcl::PointXYZRGB> pca;
+    pca.setInputCloud(_cloud);
+    Eigen::Matrix3f eigenvectors = pca.getEigenVectors();
+    Eigen::Vector3f eigenvalues = pca.getEigenValues();
+
+    // The eigenvector corresponding to the smallest eigenvalue is the normal of the plane
+    Eigen::Vector3f normal = eigenvectors.col(2); // Third column (smallest eigenvalue)
+
+    // Compute the plane coefficients (ax + by + cz + d = 0)
+    float a = normal[0];
+    float b = normal[1];
+    float c = normal[2];
+    float d = -(normal.dot(centroid.head<3>()));
+
+    // Print the plane coefficients
+    std::cout << "Plane coefficients (ax + by + cz + d = 0):\n";
+    std::cout << "a: " << a << "\n";
+    std::cout << "b: " << b << "\n";
+    std::cout << "c: " << c << "\n";
+    std::cout << "d: " << d << "\n";
+
+    Eigen::Vector4f coefficients;
+    coefficients[0] = a;
+    coefficients[1] = b;
+    coefficients[2] = c;
+    coefficients[3] = d;
+
+    return coefficients;
+}
+
+float computePlaneAngle(const Eigen::Vector4f& _coefficients){
+    // Compute the angle between the normal vector and the Z-axis
+    double theta = std::acos(_coefficients[2]); // Angle in radians
+    double theta_deg = theta * 180.0 / M_PI; // Convert to degrees
+
+    // Print the results
+    std::cout << "Angle between normal and Z-axis: " << theta_deg << " degrees\n";
+
+    return theta_deg;
+}
+
+float pointToPlaneDistance(const pcl::PointXYZRGB& _point, const Eigen::Vector4f& _coefficients) {
+    float a = _coefficients[0];
+    float b = _coefficients[1];
+    float c = _coefficients[2];
+    float d = _coefficients[3];
+
+    // Compute the distance
+    float distance = std::abs(a * _point.x + b * _point.y + c * _point.z + d);
+    return distance;
+}
+
+float computeStandardDeviation(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr _cloud, const Eigen::Vector4f& coefficients) {
+    std::vector<float> distances;
+    for (const auto& point : _cloud->points) {
+        float distance = pointToPlaneDistance(point, coefficients);
+        distances.push_back(distance);
+    }
+
+    // Compute the mean distance
+    float mean = std::accumulate(distances.begin(), distances.end(), 0.0f) / distances.size();
+
+    // Compute the variance
+    float variance = 0.0f;
+    for (float distance : distances) {
+        variance += std::pow(distance - mean, 2);
+    }
+    variance /= distances.size();
+
+    // Compute the standard deviation
+    float std_dev = std::sqrt(variance);
+    std::cout << "Standard Deviation: " << std_dev << std::endl;
+    return std_dev;
+}
+
 void printPoint(const pcl::PointXYZRGB& _point){
     std::cout << "Point: ("
     << _point.x << ", "
@@ -282,20 +412,19 @@ void view(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> _clouds){
     viewer->addCoordinateSystem (1.0);
     viewer->initCameraParameters ();
     // https://github.com/PointCloudLibrary/pcl/issues/5237#issuecomment-1114255056
-    // spin() avoids crash
+    // spin() instead of spinOnce() avoids crash
     viewer->spin();
 }
 
 int main() {
     std::string ply_file_path = "../inputs/rtabmap_cloud.ply";
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = loadPly(ply_file_path);
+    pcl::search::KdTree<pcl::PointXYZRGB> kdTree;
+    // pcl::PointCloud<pcl::PointNormal> normalsCloud = extractNormalsPC(*cloud, pcl::PointXYZRGB(0.0, 0.0, 0.0, 255, 255, 255));
 
     // Landing point [15.50081099  3.76794873 12.62245941]
 
     pcl::PointXYZRGB centerPoint(15.50081099, 3.76794873, 0.0, 255, 255, 255);
-    pcl::search::KdTree<pcl::PointXYZRGB> kdTree;
-
-    pcl::PointCloud<pcl::PointNormal> normalsCloud = extractNormalsPC(*cloud, pcl::PointXYZRGB(0.0, 0.0, 0.0, 255, 255, 255));
     pcl::PointXYZRGB highestPoint = getHighestPoint(*cloud);
     centerPoint.z = highestPoint.z;
     printPoint(centerPoint);
@@ -303,20 +432,28 @@ int main() {
     downSamplePointCloud(*cloud, 0.1);
 
     kdTree.setInputCloud(cloud);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr landingZoneCloud = extractNeighborPC(*cloud, kdTree, centerPoint, 1.5);
-    colorSegmentedPoints(*landingZoneCloud, pcl::RGB(255,0,0));
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr dfCloud = extractNeighborPC(*cloud, kdTree, centerPoint, 1.5);
 
     pcl::PointIndices biggestIdx = extractBiggestCluster(*cloud, 0.5, 10);
-    colorSegmentedPoints(*cloud, pcl::RGB(255,255,255));
-    // colorSegmentedPoints(*cloud, biggestIdx, pcl::RGB(0,0,255));
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr smoothCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::copyPointCloud(*cloud, *smoothCloud);
     downSamplePointCloud(*smoothCloud, 0.5);
     smoothPC(*smoothCloud, 3.0);
-    colorSegmentedPoints(*smoothCloud, pcl::RGB(0,0,255));
 
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds = {landingZoneCloud, smoothCloud};
-    view(clouds);
+    pcl::PointXYZRGB highestPointSmooth = getHighestPoint(*smoothCloud);
+    kdTree.setInputCloud(cloud);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr highCloud = extractNeighborPC(*cloud, kdTree, highestPointSmooth, 1.5);
+
+    computeDensity(*highCloud, 1.5);
+    Eigen::Vector4f coef = computePlane(highCloud);
+    computePlaneAngle(coef);
+    computeStandardDeviation(highCloud, coef);
+
+    colorSegmentedPoints(*cloud, pcl::RGB(255,255,255));
+    colorSegmentedPoints(*dfCloud, pcl::RGB(255,0,0));
+    colorSegmentedPoints(*smoothCloud, pcl::RGB(0,0,255));
+    colorSegmentedPoints(*highCloud, pcl::RGB(255,255,0));
+    view(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>{cloud, smoothCloud, dfCloud, highCloud});
     return 0;
 }
