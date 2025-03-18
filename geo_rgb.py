@@ -94,7 +94,7 @@ print(f"Meters per degree of longitude at latitude {CENTER_LAT}: {meters_per_deg
 print(f"Meters per degree of latitude at latitude {CENTER_LAT}: {meters_per_degree_lat}")
 
 # Load the PNG image as a numpy array
-png_image = image.imread('img.png')
+png_image = image.imread('inputs/img.png')
 
 image_height_pixels = png_image.shape[0]
 image_width_pixels = png_image.shape[1]
@@ -163,7 +163,7 @@ crs = 'EPSG:4326'
 
 # Save the geo-referenced image as a GeoTIFF
 with rasterio.open(
-    'output_georeferenced_sim.tif',
+    'outputs/output_georeferenced_sim.tif',
     'w',
     driver='GTiff',
     height=png_image.shape[0],

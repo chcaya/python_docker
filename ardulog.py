@@ -55,7 +55,7 @@ def find_closest_timestamps_idx(_input_timestamps, _timestamps_list):
 
 ### Extract and print logs ###
 type_request = ['RCIN', 'IMU', 'POS', 'BARO', 'MODE', 'MAG', 'XKF1', 'ORGN']
-output = Ardupilot.parse(Path(__file__).parent / 'log_1_2025-3-6-15-17-46.bin', types=type_request, zero_time_base=True)
+output = Ardupilot.parse(Path(__file__).parent / 'inputs/log_1_2025-3-6-15-17-46.bin', types=type_request, zero_time_base=True)
 print(str(output.dfs['RCIN']['C5']))
 print(str(output.dfs['RCIN']['C6']))
 print(str(output.dfs['IMU']))
@@ -205,6 +205,6 @@ las.green = colors[:, 1]
 las.blue = colors[:, 2]
 
 # Save the LAS file
-las.write("landings.las")
+las.write("outputs/landings.las")
 
 print("LAS file created successfully!")

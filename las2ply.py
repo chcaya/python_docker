@@ -4,8 +4,8 @@ from affine import Affine
 import math
 import numpy as np
 
-input_file = 'landings.las'
-output_file = 'landings.ply'
+input_file = 'outputs/landings.las'
+output_file = 'outputs/landings.ply'
 
 # landings origin
 # ORIGIN_LAT = 45.378541  # Latitude in degrees

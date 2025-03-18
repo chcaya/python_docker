@@ -5,22 +5,15 @@ import math
 import numpy as np
 import open3d as o3d
 
-input_file = 'rtabmap_cloud.ply'
-# input_file = 'landings_cloud.ply'
+input_file = 'inputs/rtabmap_cloud.ply'
 
-output_file = 'output_sim.las'
-# output_file = 'landings.las'
+output_file = 'outputs/output_sim.las'
 
 # rtabmap_cloud
 ORIGIN_LAT = 45.3777769  # Latitude in degrees
 ORIGIN_LONG = -71.9403259  # Longitude in degrees
 # YAW = math.radians(92.82) - math.radians(90)
 YAW = 0
-
-# landings_cloud
-# ORIGIN_LAT = 45.378541  # Latitude in degrees
-# ORIGIN_LONG = -71.942203  # Longitude in degrees
-# YAW = 0
 
 def get_meters_per_degree_at_coord(_coord_long, _coord_lat):
     # Define the WGS84 ellipsoid
@@ -51,7 +44,7 @@ def affine2pdal(_affine):
 meters_per_degree_lon, meters_per_degree_lat = get_meters_per_degree_at_coord(ORIGIN_LONG, ORIGIN_LAT)
 
 # Load the point cloud from the PLY file
-point_cloud = o3d.io.read_point_cloud("rtabmap_cloud.ply")
+point_cloud = o3d.io.read_point_cloud(input_file)
 
 # Get the points as a NumPy array
 points = np.asarray(point_cloud.points)
