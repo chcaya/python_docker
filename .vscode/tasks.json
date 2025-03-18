@@ -16,8 +16,13 @@
                 "-Wl,--copy-dt-needed-entries",
                 "-lpcl_io",
                 "-lpcl_common",
+                "-lpcl_search",
+                "-lpcl_filters",
+                "-lpcl_segmentation",
+                "-lpcl_surface",
+                "-lpcl_features",
                 "-lpcl_visualization",
-                "-lvtkCommonCore-9.1"       // VTK library
+                "-lvtkCommonCore-9.1"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
