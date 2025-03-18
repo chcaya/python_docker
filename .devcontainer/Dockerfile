@@ -19,12 +19,18 @@ RUN apt-get update && \
 # Switch from root to user
 USER $USERNAME
 
-# Install Python essentials
+### Install Python essentials
 RUN sudo apt-get update && \
     sudo apt-get install -y \
     git \
     python3 \
     python3-pip
+
+### Install C++ essentials
+RUN sudo apt-get update && \
+    sudo apt-get install -y \
+    build-essential \
+    gdb
 
 ### Install Conda
 RUN sudo apt-get update && \
