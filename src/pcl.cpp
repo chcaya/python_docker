@@ -372,14 +372,33 @@ Eigen::Vector4f computePlane(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr _cloud
 }
 
 float computePlaneAngle(const Eigen::Vector4f& _coefficients){
-    // Compute the angle between the normal vector and the Z-axis
-    double theta = std::acos(_coefficients[2]); // Angle in radians
-    double theta_deg = theta * 180.0 / M_PI; // Convert to degrees
+    // Extract the normal vector (nx, ny, nz)
+    Eigen::Vector3f normal(_coefficients[0], _coefficients[1], _coefficients[2]);
+
+    // Normalize the normal vector (in case it's not already normalized)
+    normal.normalize();
+
+    // Define the Z-axis vector
+    Eigen::Vector3f z_axis(0.0f, 0.0f, 1.0f);
+
+    // Compute the dot product between the normal and the Z-axis
+    float dot_product = normal.dot(z_axis);
+
+    // Compute the angle in radians
+    double theta = std::acos(dot_product);
+
+    // Convert to degrees
+    double theta_deg = theta * 180.0 / M_PI;
+
+    double slope = theta_deg;
+    if (theta_deg > 90.0) {
+        slope = 180.0 - theta_deg;
+    }
 
     // Print the results
-    std::cout << "Angle between normal and Z-axis: " << theta_deg << " degrees\n";
+    std::cout << "Angle of slope: " << slope << " degrees\n";
 
-    return theta_deg;
+    return slope;
 }
 
 float pointToPlaneDistance(const pcl::PointXYZRGB& _point, const Eigen::Vector4f& _coefficients) {
@@ -414,6 +433,44 @@ float computeStandardDeviation(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr _clo
     float std_dev = std::sqrt(variance);
     std::cout << "Standard Deviation: " << std_dev << std::endl;
     return std_dev;
+}
+
+float computePointsDist2D(
+    const pcl::PointXYZRGB& _point1,
+    const pcl::PointXYZRGB& _point2
+){
+    float dx = _point1.x - _point2.x;
+    float dy = _point1.y - _point2.y;
+    return std::sqrt(dx * dx + dy * dy);
+}
+
+float computePointsDist3D(
+    const pcl::PointXYZRGB& _point1,
+    const pcl::PointXYZRGB& _point2
+){
+    float dx = _point1.x - _point2.x;
+    float dy = _point1.y - _point2.y;
+    float dz = _point1.z - _point2.z;
+    return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+std::vector<float> computeDist2Centers(
+    const pcl::PointXYZRGB& _landingPoint,
+    const pcl::PointXYZRGB& _dfCenterPoint,
+    const pcl::PointXYZRGB& _pcCenterPoint
+) {
+    std::vector<float> output(4);
+    output[0] = computePointsDist2D(_landingPoint, _dfCenterPoint);
+    output[1] = computePointsDist2D(_landingPoint, _pcCenterPoint);
+    output[2] = computePointsDist3D(_landingPoint, _dfCenterPoint);
+    output[3] = computePointsDist3D(_landingPoint, _pcCenterPoint);
+
+    std::cout << "Distance to DF Center 2D: " << output[0] << std::endl;
+    std::cout << "Distance to PC Center 2D: " << output[1] << std::endl;
+    std::cout << "Distance to DF Center 3D: " << output[2] << std::endl;
+    std::cout << "Distance to PC Center 3D: " << output[3] << std::endl;
+
+    return output;
 }
 
 void printPoint(const pcl::PointXYZRGB& _point){
@@ -483,43 +540,37 @@ void view(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> _clouds){
 
 int main() {
     std::string ply_file_path = "../inputs/rtabmap_cloud.ply";
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = loadPly(ply_file_path);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr ogCloud = loadPly(ply_file_path);
     // pcl::PointCloud<pcl::PointNormal> normalsCloud = extractNormalsPC(*cloud, pcl::PointXYZRGB(0.0, 0.0, 0.0, 255, 255, 255));
 
     // Landing point [15.50081099  3.76794873 12.62245941]
 
-    pcl::PointXYZRGB centerPoint(15.50081099, 3.76794873, 0.0, 255, 255, 255);
-    pcl::PointXYZRGB highestPoint = getHighestPoint(cloud);
-    centerPoint.z = highestPoint.z;
-    printPoint(centerPoint);
+    pcl::PointXYZRGB dfCenterPoint(15.50081099, 3.76794873, 0.0, 255, 255, 255);
+    pcl::PointXYZRGB landingPoint(15.0, 4.0, 0.0, 255, 255, 255);
 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>(*ogCloud));
     downSamplePointCloud(cloud, 0.1);
+    extractBiggestCluster(cloud, 0.5, 10);
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr dfCloud = extractNeighborPC(cloud, centerPoint, DRONE_RADIUS);
-
-    pcl::PointIndices biggestIdx = extractBiggestCluster(cloud, 0.5, 10);
-
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr smoothCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::copyPointCloud(*cloud, *smoothCloud);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr smoothCloud(new pcl::PointCloud<pcl::PointXYZRGB>(*cloud));
     downSamplePointCloud(smoothCloud, 0.5);
-
     smoothPC(smoothCloud, 2*DRONE_RADIUS);
-    // projectPoint(cloud, centerPoint);
-    projectPoint(smoothCloud, centerPoint);
+    projectPoint(smoothCloud, dfCenterPoint);
+    projectPoint(smoothCloud, landingPoint);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr landingCloud = extractNeighborPC(ogCloud, landingPoint, DRONE_RADIUS);
 
-    pcl::PointXYZRGB highestPointSmooth = getHighestPoint(smoothCloud);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr highCloud = extractNeighborPC(cloud, highestPointSmooth, DRONE_RADIUS);
+    pcl::PointXYZRGB pcCenterPoint = getHighestPoint(smoothCloud);
 
-    computeCurvature(smoothCloud, centerPoint, DRONE_RADIUS);
-    computeDensity(cloud, DRONE_RADIUS);
-    Eigen::Vector4f coef = computePlane(highCloud);
+    computeCurvature(smoothCloud, landingPoint, DRONE_RADIUS);
+    computeDensity(landingCloud, DRONE_RADIUS);
+    Eigen::Vector4f coef = computePlane(landingCloud);
     computePlaneAngle(coef);
-    computeStandardDeviation(highCloud, coef);
+    computeStandardDeviation(landingCloud, coef);
+    computeDist2Centers(landingPoint, dfCenterPoint, pcCenterPoint);
 
     colorSegmentedPoints(cloud, pcl::RGB(255,255,255));
-    colorSegmentedPoints(dfCloud, pcl::RGB(255,0,0));
     colorSegmentedPoints(smoothCloud, pcl::RGB(0,0,255));
-    colorSegmentedPoints(highCloud, pcl::RGB(255,255,0));
-    view(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>{cloud, smoothCloud, dfCloud, highCloud});
+    colorSegmentedPoints(landingCloud, pcl::RGB(255,0,0));
+    view(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>{ogCloud, smoothCloud, landingCloud});
     return 0;
 }
