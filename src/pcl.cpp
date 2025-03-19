@@ -10,11 +10,13 @@
 #include <pcl/surface/mls.h>
 #include <pcl/common/centroid.h>
 #include <pcl/common/pca.h>
+#include <pcl/features/principal_curvatures.h>
 
 #include <pcl/visualization/pcl_visualizer.h> // For visualization (optional)
 
 
 const int N_NEIGHBORS_SEARCH = 4;
+const float DRONE_RADIUS = 1.5;
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr loadPly(std::string _filePath){
     // Create a point cloud object for XYZRGB points
@@ -200,7 +202,7 @@ pcl::PointIndices extractBiggestCluster(pcl::PointCloud<pcl::PointXYZRGB>& _poin
     return inliers;
 }
 
-void smoothPC(pcl::PointCloud<pcl::PointXYZRGB>& _pointCloud, const float _searchRadius)
+void smoothPC(pcl::PointCloud<pcl::PointXYZRGB>& _pointCloud, pcl::search::KdTree<pcl::PointXYZRGB>& _kdtree, const float _searchRadius)
 {
     // Output has the PointNormal type in order to store the normals calculated by MLS
     pcl::PointCloud<pcl::PointNormal> mls_points;
@@ -214,7 +216,7 @@ void smoothPC(pcl::PointCloud<pcl::PointXYZRGB>& _pointCloud, const float _searc
     // Set parameters
     mls.setInputCloud(_pointCloud.makeShared());
     mls.setPolynomialOrder(2);
-    mls.setSearchMethod(std::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(pointTree));
+    mls.setSearchMethod(std::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(_kdtree));
     mls.setSearchRadius(_searchRadius);
 
     // Reconstruct
@@ -234,41 +236,91 @@ float computeDensity(const pcl::PointCloud<pcl::PointXYZRGB>& _cloud, float _rad
     return density;
 }
 
-// Eigen::Vector3f computeCurvature(const pcl::PointCloud<pcl::Normal>& _normals) {
-//     // Compute normals (required for curvature estimation)
-//     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-//     pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> normal_estimator;
-//     normal_estimator.setInputCloud(cloud);
-//     normal_estimator.setKSearch(10); // Use 10 nearest neighbors to estimate normals
-//     normal_estimator.compute(*normals);
+int projectPoint(
+    const pcl::PointCloud<pcl::PointXYZRGB>& _cloud,
+    pcl::PointXYZRGB& _point
+){
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_copy(new pcl::PointCloud<pcl::PointXYZRGB>(_cloud));
+    for (auto& point : cloud_copy->points) {
+        point.z = 0;
+    }
 
-//     // Create a PrincipalCurvaturesEstimation object
-//     pcl::PrincipalCurvaturesEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::PrincipalCurvatures> curvature_estimator;
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+    kdtree->setInputCloud(cloud_copy);
 
-//     // Set the input cloud and normals
-//     curvature_estimator.setInputCloud(cloud);
-//     curvature_estimator.setInputNormals(normals);
+    std::vector<int> point_indices;
+    std::vector<float> point_distances;
+    int nClosestPoints = 4;
+    float avgZ = 0.0;
+    if (kdtree->nearestKSearch(_point, nClosestPoints, point_indices, point_distances) > 0) {
+        for (auto& idx : point_indices) {
+            pcl::PointXYZRGB closest_point = _cloud.points[idx];
+            std::cout << "Closest point: (" << closest_point.x << ", "
+                      << closest_point.y << ", " << closest_point.z << ")" << std::endl;
+            std::cout << "Z coordinate: " << closest_point.z << std::endl;
+            avgZ += closest_point.z;
+        }
+        avgZ = avgZ/float(point_indices.size());
+        std::cout << "Z average coordinate: " << avgZ << std::endl;
+    }
 
-//     // Set the search method (e.g., KdTree)
-//     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
-//     curvature_estimator.setSearchMethod(tree);
+    _point.z = avgZ;
 
-//     // Set the radius for curvature estimation
-//     curvature_estimator.setRadiusSearch(0.03); // Use a radius of 0.03 meters
+    return avgZ;
+}
 
-//     // Compute the principal curvatures
-//     pcl::PointCloud<pcl::PrincipalCurvatures>::Ptr curvatures(new pcl::PointCloud<pcl::PrincipalCurvatures>);
-//     curvature_estimator.compute(*curvatures);
+pcl::PrincipalCurvatures computeCurvature(
+    const pcl::PointCloud<pcl::PointXYZRGB>& _cloud,
+    const pcl::PointXYZRGB& _point,
+    const float _radius
+){
+    // Step 1: Create a copy of the input cloud and add the point
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_copy(new pcl::PointCloud<pcl::PointXYZRGB>(_cloud));
+    cloud_copy->push_back(_point);
 
-//     // Print the results
-//     for (size_t i = 0; i < curvatures->size(); ++i) {
-//         const auto& curvature = curvatures->points[i];
-//         std::cout << "Point " << i << ":\n";
-//         std::cout << "  Principal Curvatures: " << curvature.pc1 << ", " << curvature.pc2 << "\n";
-//         std::cout << "  Principal Directions: (" << curvature.principal_curvature_x << ", "
-//                   << curvature.principal_curvature_y << ", " << curvature.principal_curvature_z << ")\n";
-//     }
-// }
+    // Step 2: Create a KdTree and set the input cloud
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZRGB>);
+    kdtree->setInputCloud(cloud_copy);
+
+    // Step 3: Compute normals for the whole cloud
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+    ne.setInputCloud(cloud_copy);
+    ne.setSearchMethod(kdtree);
+    ne.setRadiusSearch(_radius); // Use the same radius for normal estimation
+    ne.compute(*normals);
+
+    // Step 4: Compute principal curvatures for the whole cloud
+    pcl::PrincipalCurvaturesEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::PrincipalCurvatures> ce;
+    ce.setInputCloud(cloud_copy);
+    ce.setInputNormals(normals);
+    ce.setSearchMethod(kdtree);
+    ce.setRadiusSearch(_radius);
+
+    pcl::PointCloud<pcl::PrincipalCurvatures>::Ptr curvatures(new pcl::PointCloud<pcl::PrincipalCurvatures>);
+    ce.compute(*curvatures);
+
+    // Step 5: Print out results
+    int lastIdx = curvatures->size() - 1;
+    const auto& curvature = curvatures->points[lastIdx];
+    float pc1 = curvature.pc1;
+    float pc2 = curvature.pc2;
+    float mean_curvature = (pc1 + pc2) / 2.0f;
+    float gaussian_curvature = pc1 * pc2;
+
+    std::cout << "Point " << lastIdx << ": Principal Curvatures: " << pc1 << ", " << pc2
+                << ", Mean Curvature: " << mean_curvature
+                << ", Gaussian Curvature: " << gaussian_curvature << std::endl;
+    std::cout << "  Principal Directions: (" << curvature.principal_curvature_x << ", "
+                << curvature.principal_curvature_y << ", " << curvature.principal_curvature_z << ")\n";
+
+    // Step 6: Return the curvature of the target point (last point in the cloud)
+    if (!curvatures->empty()) {
+        return curvatures->points[lastIdx]; // The last point corresponds to the added point
+    } else {
+        throw std::runtime_error("No curvature computed for the specified point.");
+    }
+}
 
 Eigen::Vector4f computePlane(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr _cloud){
     // Compute the centroid of the point cloud
@@ -432,20 +484,26 @@ int main() {
     downSamplePointCloud(*cloud, 0.1);
 
     kdTree.setInputCloud(cloud);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr dfCloud = extractNeighborPC(*cloud, kdTree, centerPoint, 1.5);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr dfCloud = extractNeighborPC(*cloud, kdTree, centerPoint, DRONE_RADIUS);
 
     pcl::PointIndices biggestIdx = extractBiggestCluster(*cloud, 0.5, 10);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr smoothCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::copyPointCloud(*cloud, *smoothCloud);
     downSamplePointCloud(*smoothCloud, 0.5);
-    smoothPC(*smoothCloud, 3.0);
+
+    kdTree.setInputCloud(smoothCloud);
+    smoothPC(*smoothCloud, kdTree, 2*DRONE_RADIUS);
+    // projectPoint(*cloud, centerPoint);
+    projectPoint(*smoothCloud, centerPoint);
 
     pcl::PointXYZRGB highestPointSmooth = getHighestPoint(*smoothCloud);
     kdTree.setInputCloud(cloud);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr highCloud = extractNeighborPC(*cloud, kdTree, highestPointSmooth, 1.5);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr highCloud = extractNeighborPC(*cloud, kdTree, highestPointSmooth, DRONE_RADIUS);
 
-    computeDensity(*highCloud, 1.5);
+    kdTree.setInputCloud(highCloud);
+    computeCurvature(*smoothCloud, centerPoint, DRONE_RADIUS);
+    computeDensity(*cloud, DRONE_RADIUS);
     Eigen::Vector4f coef = computePlane(highCloud);
     computePlaneAngle(coef);
     computeStandardDeviation(highCloud, coef);
