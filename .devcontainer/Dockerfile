@@ -51,9 +51,9 @@ WORKDIR $WS
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV TZ="America/New_York"
 RUN sudo -E apt-get update -y && sudo -E apt-get install -y python3-tk
-RUN pip install ardupilot_log_reader && \
-    pip install matplotlib && \
-    pip install laspy
+RUN /bin/python3 -m pip install ardupilot_log_reader && \
+    /bin/python3 -m pip install matplotlib && \
+    /bin/python3 -m pip install laspy
 
 ### PC post process tools
 WORKDIR $WS
@@ -63,7 +63,7 @@ RUN sudo apt-get update && \
 RUN sudo apt-get update && sudo apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0
-RUN pip install open3d-cpu
+RUN /bin/python3 -m pip install open3d-cpu
 # https://github.com/isl-org/Open3D/issues/6872#issuecomment-2615797521
 ENV XDG_SESSION_TYPE=x11
 
@@ -76,5 +76,5 @@ ENV PROJ_LIB=/opt/conda/share/proj
 
 ### RGB post process tools
 WORKDIR $WS
-RUN pip install rasterio && \
-    pip install pyproj
+RUN /bin/python3 -m pip install rasterio && \
+    /bin/python3 -m pip install pyproj
