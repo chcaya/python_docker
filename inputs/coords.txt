@@ -31,3 +31,12 @@ Roll: -3.63°, Pitch: -0.12°, Yaw: -0.12°
 
 Point cloud center global: latitude=45.3778108, longitude=-71.940128, altitude=199.09229381145147
 
+
+
+DeepForest
+Details of the Largest Bounding Box:
+- Center pixels: (613, 349)
+- Center meters: (-2.5985211272475497, -1.0586567555452984, 64.90690803527832)
+- Smallest Side: 7.314355765585696
+- Diagonal: 10.344061123713136
+- Area: 53.49980026555672

@@ -575,15 +575,38 @@ void view(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> _clouds){
     viewer->spin();
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    // std::cerr << "Number of args received: " << argc << "\n";
+
     std::string ply_file_path = "../inputs/rtabmap_cloud.ply";
+    float landing_x = 15.50081099;
+    float landing_y = 3.76794873;
+    float df_x = 15.0;
+    float df_y = 4.0;
+    std::string output_csv_path = "../outputs/output.csv";
+    bool shouldView = true;
+
+    // Check if the correct number of arguments is provided
+    if (argc == 7) {
+        // Parse command-line arguments
+        ply_file_path = argv[1];
+        landing_x = std::stof(argv[2]);
+        landing_y = std::stof(argv[3]);
+        df_x = std::stof(argv[4]);
+        df_y = std::stof(argv[5]);
+        output_csv_path = argv[6];
+        shouldView = false;
+    }
+    else if (argc != 1) {
+        std::cerr << "Usage: " << argv[0] << " <ply_file_path> <landing_x> <landing_y> <center_x> <center_y> <output_csv_path>\n";
+        return 1;
+    }
+
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr ogCloud = loadPly(ply_file_path);
     // pcl::PointCloud<pcl::PointNormal> normalsCloud = extractNormalsPC(*cloud, pcl::PointXYZRGB(0.0, 0.0, 0.0, 255, 255, 255));
 
-    // Landing point [15.50081099  3.76794873 12.62245941]
-
-    pcl::PointXYZRGB dfCenterPoint(15.50081099, 3.76794873, 0.0, 255, 255, 255);
-    pcl::PointXYZRGB landingPoint(15.0, 4.0, 0.0, 255, 255, 255);
+    pcl::PointXYZRGB dfCenterPoint(df_x, df_y, 0.0, 255, 255, 255);
+    pcl::PointXYZRGB landingPoint(landing_x, landing_y, 0.0, 255, 255, 255);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>(*ogCloud));
     downSamplePointCloud(cloud, 0.1);
@@ -605,11 +628,14 @@ int main() {
     float stdDev = computeStandardDeviation(landingCloud, coef);
     std::vector<float> centerDists = computeDistToCenters(landingPoint, dfCenterPoint, pcCenterPoint);
 
-    saveToCSV("../outputs/test.csv", curvatures, density, slope, stdDev, centerDists);
+    saveToCSV(output_csv_path, curvatures, density, slope, stdDev, centerDists);
 
-    colorSegmentedPoints(cloud, pcl::RGB(255,255,255));
-    colorSegmentedPoints(smoothCloud, pcl::RGB(0,0,255));
-    colorSegmentedPoints(landingCloud, pcl::RGB(255,0,0));
-    view(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>{ogCloud, smoothCloud, landingCloud});
+    if(shouldView){
+        colorSegmentedPoints(cloud, pcl::RGB(255,255,255));
+        colorSegmentedPoints(smoothCloud, pcl::RGB(0,0,255));
+        colorSegmentedPoints(landingCloud, pcl::RGB(255,0,0));
+        view(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>{ogCloud, smoothCloud, landingCloud});
+    }
+
     return 0;
 }
