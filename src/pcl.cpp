@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+
 #include <pcl/io/ply_io.h> // For loading PLY files
 #include <pcl/point_types.h> // For point cloud types
 
@@ -454,7 +456,7 @@ float computePointsDist3D(
     return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-std::vector<float> computeDist2Centers(
+std::vector<float> computeDistToCenters(
     const pcl::PointXYZRGB& _landingPoint,
     const pcl::PointXYZRGB& _dfCenterPoint,
     const pcl::PointXYZRGB& _pcCenterPoint
@@ -471,6 +473,41 @@ std::vector<float> computeDist2Centers(
     std::cout << "Distance to PC Center 3D: " << output[3] << std::endl;
 
     return output;
+}
+
+void saveToCSV(
+    const std::string& _filename,
+    const pcl::PrincipalCurvatures& _curvatures,
+    const float _density,
+    const float _slope,
+    const float _stdDev,
+    const std::vector<float>& _centerDists
+) {
+    // Open the file for writing
+    std::ofstream file;
+    file.open(_filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file " << _filename << " for writing." << std::endl;
+        return;
+    }
+
+    // Write headers
+    file << "Curvature_PC1,Curvature_PC2,Mean_Curvature,Gaussian_Curvature,"
+         << "Density,Slope,Standard_Deviation,"
+         << "Distance_DF_Center_2D,Distance_PC_Center_2D,Distance_DF_Center_3D,Distance_PC_Center_3D\n";
+
+    // Write data
+    file << _curvatures.pc1 << "," << _curvatures.pc2 << "," << (_curvatures.pc1 + _curvatures.pc2) / 2.0f << "," << _curvatures.pc1 * _curvatures.pc2 << ","
+         << _density << ","
+         << _slope << ","
+         << _stdDev << ","
+         << _centerDists[0] << "," << _centerDists[1] << "," << _centerDists[2] << "," << _centerDists[3] << "\n";
+
+    // Close the file
+    file.close();
+
+    std::cout << "Data saved to " << _filename << std::endl;
 }
 
 void printPoint(const pcl::PointXYZRGB& _point){
@@ -561,12 +598,14 @@ int main() {
 
     pcl::PointXYZRGB pcCenterPoint = getHighestPoint(smoothCloud);
 
-    computeCurvature(smoothCloud, landingPoint, DRONE_RADIUS);
-    computeDensity(landingCloud, DRONE_RADIUS);
+    pcl::PrincipalCurvatures curvatures = computeCurvature(smoothCloud, landingPoint, DRONE_RADIUS);
+    float density = computeDensity(landingCloud, DRONE_RADIUS);
     Eigen::Vector4f coef = computePlane(landingCloud);
-    computePlaneAngle(coef);
-    computeStandardDeviation(landingCloud, coef);
-    computeDist2Centers(landingPoint, dfCenterPoint, pcCenterPoint);
+    float slope = computePlaneAngle(coef);
+    float stdDev = computeStandardDeviation(landingCloud, coef);
+    std::vector<float> centerDists = computeDistToCenters(landingPoint, dfCenterPoint, pcCenterPoint);
+
+    saveToCSV("../outputs/test.csv", curvatures, density, slope, stdDev, centerDists);
 
     colorSegmentedPoints(cloud, pcl::RGB(255,255,255));
     colorSegmentedPoints(smoothCloud, pcl::RGB(0,0,255));
