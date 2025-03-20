@@ -579,22 +579,22 @@ int main(int argc, char* argv[]) {
     // std::cerr << "Number of args received: " << argc << "\n";
 
     std::string ply_file_path = "../inputs/rtabmap_cloud.ply";
+    std::string output_csv_path = "../outputs/output.csv";
     float landing_x = 15.50081099;
     float landing_y = 3.76794873;
     float df_x = 15.0;
     float df_y = 4.0;
-    std::string output_csv_path = "../outputs/output.csv";
     bool shouldView = true;
 
     // Check if the correct number of arguments is provided
     if (argc == 7) {
         // Parse command-line arguments
         ply_file_path = argv[1];
-        landing_x = std::stof(argv[2]);
-        landing_y = std::stof(argv[3]);
-        df_x = std::stof(argv[4]);
-        df_y = std::stof(argv[5]);
-        output_csv_path = argv[6];
+        output_csv_path = argv[2];
+        landing_x = std::stof(argv[3]);
+        landing_y = std::stof(argv[4]);
+        df_x = std::stof(argv[5]);
+        df_y = std::stof(argv[6]);
         shouldView = false;
     }
     else if (argc != 1) {

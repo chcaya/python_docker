@@ -53,7 +53,9 @@ ENV TZ="America/New_York"
 RUN sudo -E apt-get update -y && sudo -E apt-get install -y python3-tk
 RUN /bin/python3 -m pip install ardupilot_log_reader && \
     /bin/python3 -m pip install matplotlib && \
-    /bin/python3 -m pip install laspy
+    /bin/python3 -m pip install laspy && \
+    /bin/python3 -m pip install pyproj && \
+    /bin/python3 -m pip install affine
 
 ### PC post process tools
 WORKDIR $WS
