@@ -12,6 +12,12 @@ from pyproj import Geod
 from affine import Affine
 
 
+def add_deepforest(_df):
+    deepforest_csv = pd.read_csv("inputs/deepforest.csv")
+    deepforest_data = [deepforest_csv.iloc[0].to_dict()]
+    df_deepforest = pd.DataFrame(deepforest_data)
+    return pd.concat([_df, df_deepforest])
+
 def extract_rising_edges(_timestamps, _signal, _threshold):
     rising_edges_timestamps = []
     is_rised = False
@@ -174,22 +180,16 @@ def add_pcl(_df):
     return pd.concat([_df, df_pcl], axis=1)
 
 def main():
-    deepforest_csv = {
-        'smallest_side': [7.314355765585696],
-        'diagonal': [10.344061123713136],
-        'area': [53.49980026555672],
-        'center_x': [15.50081099],
-        'center_y': [3.76794873],
-        'specie': ["birch"]
-    }
+    specie = 'birch'
 
-    # Convert the dictionary to a pandas DataFrame
-    df = pd.DataFrame(deepforest_csv)
+    df = pd.DataFrame()
+    df = add_deepforest(df)
     df = add_ardulog(df)
     df = add_pcl(df)
+    df['specie'] = specie
 
-    output_path = "outputs/output.csv"
-    df.to_csv(output_path, index=True)
+    df.to_csv("outputs/output.csv", index=False)
+    print(df)
 
 
 
