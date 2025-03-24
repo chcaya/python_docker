@@ -12,10 +12,57 @@ from pyproj import Geod
 from affine import Affine
 
 
+
+def pixel_to_map(_u, _v):
+    pix = np.array([_u, _v, 1, 1])
+    TZKinv = np.loadtxt(
+        "/home/docker/python_docker/inputs/TZKinv.txt",
+        dtype=np.float64,  # Force 64-bit precision
+        delimiter=None,     # Auto-detect whitespace
+        ndmin=2            # Ensure 2D even if file has 1 row
+    )
+
+    map = (TZKinv@pix)[:3]
+
+    # print('Map:')
+    # print(map)
+
+    return map
+
+def compute_target(_boxes):
+    max_area_idx = _boxes["area"].idxmax()
+    center_x = int(_boxes.loc[max_area_idx, "x"])
+    center_y = int(_boxes.loc[max_area_idx, "y"])
+
+    max_corner = pixel_to_map(_boxes.loc[max_area_idx, "xmax"], _boxes.loc[max_area_idx, "ymax"])
+    min_corner = pixel_to_map(_boxes.loc[max_area_idx, "xmin"], _boxes.loc[max_area_idx, "ymin"])
+
+    center = pixel_to_map(center_x, center_y)
+    width = max_corner[0] - min_corner[0]
+    height = max_corner[1] - min_corner[1]
+    smallest_side = min(width, height)
+    diagonal = (width**2 + height**2) ** 0.5
+    area = width*height
+
+    print('Center pix:')
+    print(str(center_x) + ', ' + str(center_y))
+    print('Center meters:')
+    print(str(center))
+
+    data = {
+        'center_x': [center[0]],
+        'center_y': [center[1]],
+        'center_z': [center[2]],
+        'smallest_side': [smallest_side],
+        'diagonal': [diagonal],
+        'area': [area]
+    }
+
+    return pd.DataFrame(data)
+
 def add_deepforest(_df):
-    deepforest_csv = pd.read_csv("inputs/deepforest.csv")
-    deepforest_data = [deepforest_csv.iloc[0].to_dict()]
-    df_deepforest = pd.DataFrame(deepforest_data)
+    boxes_csv = pd.read_csv("inputs/boxes.csv")
+    df_deepforest = compute_target(boxes_csv)
     return pd.concat([_df, df_deepforest])
 
 def extract_rising_edges(_timestamps, _signal, _threshold):
@@ -190,7 +237,6 @@ def main():
 
     df.to_csv("outputs/output.csv", index=False)
     print(df)
-
 
 
 if __name__=="__main__":
