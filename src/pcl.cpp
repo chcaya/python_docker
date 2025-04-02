@@ -554,7 +554,7 @@ void colorSegmentedPoints(
     }
 }
 
-void addCloud2View(pcl::visualization::PCLVisualizer::Ptr _viewer, pcl::PointCloud<pcl::PointXYZRGB>::Ptr _cloud, const std::string _name){
+void addCloud2View(pcl::visualization::PCLVisualizer::Ptr _viewer, pcl::PointCloud<pcl::PointXYZRGB>::Ptr _cloud, const std::string& _name){
     pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(_cloud);
     _viewer->addPointCloud<pcl::PointXYZRGB> (_cloud, rgb, _name);
     _viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, _name);
@@ -568,8 +568,8 @@ void view(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> _clouds){
         addCloud2View(viewer, cloud, "cloud" + std::to_string(i));
         ++i;
     }
-    viewer->addCoordinateSystem (1.0);
-    viewer->initCameraParameters ();
+    viewer->addCoordinateSystem(1.0);
+    viewer->initCameraParameters();
     // https://github.com/PointCloudLibrary/pcl/issues/5237#issuecomment-1114255056
     // spin() instead of spinOnce() avoids crash
     viewer->spin();
@@ -579,7 +579,7 @@ int main(int argc, char* argv[]) {
     // std::cerr << "Number of args received: " << argc << "\n";
 
     std::string ply_file_path = "../inputs/rtabmap_cloud.ply";
-    std::string output_csv_path = "../outputs/output.csv";
+    std::string output_csv_path = "../outputs/output_pcl.csv";
     float landing_x = 15.50081099;
     float landing_y = 3.76794873;
     float df_x = 15.0;
@@ -631,6 +631,7 @@ int main(int argc, char* argv[]) {
     saveToCSV(output_csv_path, curvatures, density, slope, stdDev, centerDists);
 
     if(shouldView){
+        std::cout << "Viewing" << std::endl;
         colorSegmentedPoints(cloud, pcl::RGB(255,255,255));
         colorSegmentedPoints(smoothCloud, pcl::RGB(0,0,255));
         colorSegmentedPoints(landingCloud, pcl::RGB(255,0,0));
