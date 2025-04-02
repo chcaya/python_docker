@@ -1,13 +1,25 @@
 {
-  "name": "Python Development Environment",
+  "name": "Python Development Environment ${localWorkspaceFolderBasename}",
   "runArgs": [
     "--privileged",
-    "--network=host"
+    "--network=host",
+    "--label=devcontainer.project=${localWorkspaceFolderBasename}"
   ],
-  "workspaceFolder": "/home/docker/python_docker/",
-  "workspaceMount": "source=${localEnv:HOME}/python_docker/,target=/home/docker/python_docker/,type=bind",
+  "workspaceFolder": "/home/docker/${localWorkspaceFolderBasename}/",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/docker/${localWorkspaceFolderBasename}/,type=bind",
   "build": {
       "dockerfile": "Dockerfile",
-      "context": "."
+      "context": ".",
+      "args": {
+        "WS": "/home/docker/${localWorkspaceFolderBasename}/"
+      }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-vscode.cpptools"
+    ]
+    }
   }
 }

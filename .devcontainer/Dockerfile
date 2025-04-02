@@ -19,13 +19,29 @@ RUN apt-get update && \
 # Switch from root to user
 USER $USERNAME
 
-# Install Python essentials
+### Install Python essentials
 RUN sudo apt-get update && \
     sudo apt-get install -y \
     git \
     python3 \
     python3-pip
 
-ARG WS=/home/$USERNAME/python_docker/
+### Install C++ essentials
+RUN sudo apt-get update && \
+    sudo apt-get install -y \
+    build-essential \
+    gdb
 
-WORKDIR $WS
+### Install Conda
+RUN sudo apt-get update && \
+    sudo apt-get install -y \
+    wget
+
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    sudo /bin/bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh && \
+    sudo sh -c 'echo "export PATH=/opt/conda/bin:$PATH" > /etc/profile.d/conda.sh' && \
+    sudo chown -R $USERNAME:$USERNAME /opt/conda
+ENV PATH=/opt/conda/bin:$PATH
+
+ARG WS=/home/$USERNAME/python_docker/
