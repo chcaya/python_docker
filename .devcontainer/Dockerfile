@@ -45,3 +45,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 ENV PATH=/opt/conda/bin:$PATH
 
 ARG WS=/home/$USERNAME/python_docker/
+
+### Decision tree
+RUN /bin/python3 -m pip install numpy && \
+    /bin/python3 -m pip install pandas
