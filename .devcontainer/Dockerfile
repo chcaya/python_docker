@@ -47,5 +47,15 @@ ENV PATH=/opt/conda/bin:$PATH
 ARG WS=/home/$USERNAME/python_docker/
 
 ### Decision tree
+# For matplotlib
+ARG DEBIAN_FRONTEND="noninteractive"
+ENV TZ="America/New_York"
+RUN sudo -E apt-get update -y && \
+    sudo -E apt-get install -y \
+    python3-tk \
+    graphviz
 RUN /bin/python3 -m pip install numpy && \
-    /bin/python3 -m pip install pandas
+    /bin/python3 -m pip install pandas && \
+    /bin/python3 -m pip install matplotlib && \
+    /bin/python3 -m pip install -U scikit-learn && \
+    /bin/python3 -m pip install dtreeviz
