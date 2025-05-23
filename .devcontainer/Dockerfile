@@ -23,8 +23,7 @@ USER $USERNAME
 RUN sudo apt-get update && \
     sudo apt-get install -y \
     git \
-    python3 \
-    python3-pip
+    python3
 
 ### Install C++ essentials
 RUN sudo apt-get update && \
@@ -42,7 +41,14 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     rm /tmp/miniconda.sh && \
     sudo sh -c 'echo "export PATH=/opt/conda/bin:$PATH" > /etc/profile.d/conda.sh' && \
     sudo chown -R $USERNAME:$USERNAME /opt/conda
+
+RUN /opt/conda/bin/conda init bash && \
+    echo "conda activate docker" >> ~/.bashrc && \
+    /opt/conda/bin/conda create -n docker python=3.12 pandas
+
 ENV PATH=/opt/conda/bin:$PATH
+RUN conda create --name docker python=3.12 && \
+    conda install pip
 
 ARG WS=/home/$USERNAME/python_docker/
 
@@ -51,11 +57,11 @@ WORKDIR $WS
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV TZ="America/New_York"
 RUN sudo -E apt-get update -y && sudo -E apt-get install -y python3-tk
-RUN /bin/python3 -m pip install ardupilot_log_reader && \
-    /bin/python3 -m pip install matplotlib && \
-    /bin/python3 -m pip install laspy && \
-    /bin/python3 -m pip install pyproj && \
-    /bin/python3 -m pip install affine
+RUN conda run -n docker pip install ardupilot_log_reader && \
+    conda run -n docker pip install matplotlib && \
+    conda run -n docker pip install laspy && \
+    conda run -n docker pip install pyproj && \
+    conda run -n docker pip install affine
 
 ### PC post process tools
 WORKDIR $WS
@@ -65,7 +71,7 @@ RUN sudo apt-get update && \
 RUN sudo apt-get update && sudo apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0
-RUN /bin/python3 -m pip install open3d-cpu
+RUN conda run -n docker pip install open3d-cpu
 # https://github.com/isl-org/Open3D/issues/6872#issuecomment-2615797521
 ENV XDG_SESSION_TYPE=x11
 
@@ -78,5 +84,7 @@ ENV PROJ_LIB=/opt/conda/share/proj
 
 ### RGB post process tools
 WORKDIR $WS
-RUN /bin/python3 -m pip install rasterio && \
-    /bin/python3 -m pip install pyproj
+RUN conda run -n docker pip install rasterio && \
+    conda run -n docker pip install pyproj
+
+RUN 
