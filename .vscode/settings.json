@@ -1,0 +1,3 @@
+{
+    "python.defaultInterpreterPath": "/opt/conda/envs/docker/bin/python3"
+}

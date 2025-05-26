@@ -42,6 +42,11 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     rm /tmp/miniconda.sh && \
     sudo sh -c 'echo "export PATH=/opt/conda/bin:$PATH" > /etc/profile.d/conda.sh' && \
     sudo chown -R $USERNAME:$USERNAME /opt/conda
-ENV PATH=/opt/conda/bin:$PATH
 
-ARG WS=/home/$USERNAME/python_docker/
+RUN /opt/conda/bin/conda init bash && \
+    echo "conda activate docker" >> ~/.bashrc && \
+    /opt/conda/bin/conda create -n docker python=3.10 pandas
+
+ENV PATH=/opt/conda/bin:$PATH
+RUN conda create --name docker python=3.10 && \
+    conda install pip

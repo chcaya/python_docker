@@ -1,21 +1,30 @@
 {
   "name": "Python Development Environment ${localWorkspaceFolderBasename}",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "args": {
+      "WS": "/home/docker/${localWorkspaceFolderBasename}/"
+    }
+  },
   "runArgs": [
     "--privileged",
     "--network=host",
-    "--label=devcontainer.project=${localWorkspaceFolderBasename}"
+    "--label=devcontainer.project=${localWorkspaceFolderBasename}",
+    "-e", "UDEV=1",
+    "--volume", "/dev:/dev",
+    "--volume", "/run/udev:/run/udev"
   ],
   "workspaceFolder": "/home/docker/${localWorkspaceFolderBasename}/",
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/docker/${localWorkspaceFolderBasename}/,type=bind",
-  "build": {
-      "dockerfile": "Dockerfile",
-      "context": ".",
-      "args": {
-        "WS": "/home/docker/${localWorkspaceFolderBasename}/"
-      }
+  "remoteEnv": {
+    "DISPLAY": ":0"
   },
   "customizations": {
     "vscode": {
+      "settings": {
+        "remote.autoForwardPorts": false
+      },
       "extensions": [
         "ms-python.python",
         "ms-vscode.cpptools"
