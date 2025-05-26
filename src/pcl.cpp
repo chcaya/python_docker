@@ -12,6 +12,7 @@
 #include <pcl/surface/mls.h>
 #include <pcl/common/centroid.h>
 #include <pcl/common/pca.h>
+#include <pcl/common/common.h>
 #include <pcl/features/principal_curvatures.h>
 
 #include <pcl/visualization/pcl_visualizer.h> // For visualization (optional)
@@ -439,8 +440,8 @@ float computeStandardDeviation(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr _clo
 
 float computePointsDist2D(
     const pcl::PointXYZRGB& _point1,
-    const pcl::PointXYZRGB& _point2
-){
+    const pcl::PointXYZRGB& _point2)
+{
     float dx = _point1.x - _point2.x;
     float dy = _point1.y - _point2.y;
     return std::sqrt(dx * dx + dy * dy);
@@ -448,8 +449,8 @@ float computePointsDist2D(
 
 float computePointsDist3D(
     const pcl::PointXYZRGB& _point1,
-    const pcl::PointXYZRGB& _point2
-){
+    const pcl::PointXYZRGB& _point2)
+{
     float dx = _point1.x - _point2.x;
     float dy = _point1.y - _point2.y;
     float dz = _point1.z - _point2.z;
@@ -459,8 +460,8 @@ float computePointsDist3D(
 std::vector<float> computeDistToCenters(
     const pcl::PointXYZRGB& _landingPoint,
     const pcl::PointXYZRGB& _dfCenterPoint,
-    const pcl::PointXYZRGB& _pcCenterPoint
-) {
+    const pcl::PointXYZRGB& _pcCenterPoint)
+{
     std::vector<float> output(4);
     output[0] = computePointsDist2D(_landingPoint, _dfCenterPoint);
     output[1] = computePointsDist2D(_landingPoint, _pcCenterPoint);
@@ -473,6 +474,24 @@ std::vector<float> computeDistToCenters(
     std::cout << "Distance to PC Center 3D: " << output[3] << std::endl;
 
     return output;
+}
+
+void boundPoints(const pcl::PointXYZRGB _min_pt, const pcl::PointXYZRGB _max_pt, float& _x, float& _y)
+{
+    // Bounding box dimensions
+    float width = _max_pt.x - _min_pt.x;
+    float height = _max_pt.y - _min_pt.y;
+    float depth = _max_pt.z - _min_pt.z;
+    float c_x = width / 2.0 + _min_pt.x;
+    float c_y = height / 2.0 + _min_pt.y;
+
+    std::cout << "AABB Dimensions: "
+            << width << " (W) x "
+            << height << " (H) x "
+            << depth << " (D)\n";
+
+    if(_x < _min_pt.x || _x > _max_pt.x){_x = c_x;}
+    if(_y < _min_pt.y || _y > _max_pt.y){_y = c_y;}
 }
 
 void saveToCSV(
@@ -578,8 +597,8 @@ void view(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> _clouds){
 int main(int argc, char* argv[]) {
     // std::cerr << "Number of args received: " << argc << "\n";
 
-    std::string ply_file_path = "../inputs/rtabmap_cloud.ply";
-    std::string output_csv_path = "../outputs/output_pcl.csv";
+    std::string ply_file_path = "../inputs/rtabmap_cloud_0.ply";
+    std::string output_csv_path = "../outputs/output_pcl_0.csv";
     float landing_x = 15.50081099;
     float landing_y = 3.76794873;
     float df_x = 15.0;
@@ -604,6 +623,12 @@ int main(int argc, char* argv[]) {
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr ogCloud = loadPly(ply_file_path);
     // pcl::PointCloud<pcl::PointNormal> normalsCloud = extractNormalsPC(*cloud, pcl::PointXYZRGB(0.0, 0.0, 0.0, 255, 255, 255));
+
+    // Get min/max coordinates
+    pcl::PointXYZRGB min_pt, max_pt;
+    pcl::getMinMax3D(*ogCloud, min_pt, max_pt);
+    boundPoints(min_pt, max_pt, landing_x, landing_y);
+    boundPoints(min_pt, max_pt, df_x, df_y);
 
     pcl::PointXYZRGB dfCenterPoint(df_x, df_y, 0.0, 255, 255, 255);
     pcl::PointXYZRGB landingPoint(landing_x, landing_y, 0.0, 255, 255, 255);
