@@ -60,8 +60,8 @@ def compute_target(_boxes):
 
     return pd.DataFrame(data)
 
-def add_deepforest(_df):
-    boxes_csv = pd.read_csv("inputs/boxes.csv")
+def add_deepforest(_df, _idx):
+    boxes_csv = pd.read_csv(f"inputs/boxes_{_idx}.csv")
     df_deepforest = compute_target(boxes_csv)
     return pd.concat([_df, df_deepforest])
 
@@ -170,7 +170,7 @@ def run_ardulog(_filepath_mockup, _filepath_drone):
 
     return local_coords_s, local_coords_f
 
-def add_ardulog(_df):
+def add_ardulog(_df, _idx):
     df = _df.copy()
     local_coords_s, local_coords_f = run_ardulog(
         Path(__file__).parent / 'inputs/log_1_2025-3-6-15-17-46.bin',
@@ -206,37 +206,37 @@ def run_pcl(_args):
         print("Error running the program:")
         print(e.stderr)  # Print the standard error of the program
 
-def add_pcl(_df):
+def add_pcl(_df, _idx):
     pcl_data = []
     for i in range(len(_df)):
         landing_x = str(15.0) + str(i)
         landing_y = str(4.0) + str(i)
         args = [
-            "inputs/rtabmap_cloud.ply",
-            "outputs/output_pcl.csv",
+            f"inputs/rtabmap_cloud_{_idx}.ply",
+            f"outputs/output_pcl_{_idx}.csv",
             landing_x, # str(_df.at[i, 'landing_x'])
             landing_y, # str(_df.at[i, 'landing_y'])
             str(_df.at[i, 'center_x']),
             str(_df.at[i, 'center_y'])
         ]
         run_pcl(args)
-        pcl_csv = pd.read_csv("outputs/output_pcl.csv")
+        pcl_csv = pd.read_csv(f"outputs/output_pcl_{_idx}.csv")
         pcl_data.append(pcl_csv.iloc[0].to_dict())
 
     df_pcl = pd.DataFrame(pcl_data)
     return pd.concat([_df, df_pcl], axis=1)
 
 def main():
-    specie = 'birch'
+    for i in range(0,2):
+        specie = 'birch'
+        df = pd.DataFrame()
+        df = add_deepforest(df, i)
+        df = add_ardulog(df, i)
+        df = add_pcl(df, i)
+        df['specie'] = specie
 
-    df = pd.DataFrame()
-    df = add_deepforest(df)
-    df = add_ardulog(df)
-    df = add_pcl(df)
-    df['specie'] = specie
-
-    df.to_csv("outputs/output.csv", index=False)
-    print(df)
+        df.to_csv(f"outputs/output_{i}.csv", index=False)
+        print(df)
 
 
 if __name__=="__main__":
