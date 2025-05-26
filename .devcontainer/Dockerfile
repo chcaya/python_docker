@@ -44,10 +44,10 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 
 RUN /opt/conda/bin/conda init bash && \
     echo "conda activate docker" >> ~/.bashrc && \
-    /opt/conda/bin/conda create -n docker python=3.12 pandas
+    /opt/conda/bin/conda create -n docker python=3.10 pandas
 
 ENV PATH=/opt/conda/bin:$PATH
-RUN conda create --name docker python=3.12 && \
+RUN conda create --name docker python=3.10 && \
     conda install pip
 
 ARG WS=/home/$USERNAME/python_docker/
@@ -71,6 +71,7 @@ RUN sudo apt-get update && \
 RUN sudo apt-get update && sudo apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0
+RUN conda install -c conda-forge libstdcxx-ng -y
 RUN conda run -n docker pip install open3d-cpu
 # https://github.com/isl-org/Open3D/issues/6872#issuecomment-2615797521
 ENV XDG_SESSION_TYPE=x11
