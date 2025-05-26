@@ -3,6 +3,7 @@
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".",
+    "target": "base",
     "args": {
       "WS": "/home/docker/${localWorkspaceFolderBasename}/"
     }
