@@ -490,8 +490,16 @@ void boundPoints(const pcl::PointXYZRGB _min_pt, const pcl::PointXYZRGB _max_pt,
             << height << " (H) x "
             << depth << " (D)\n";
 
-    if(_x < _min_pt.x || _x > _max_pt.x){_x = c_x;}
-    if(_y < _min_pt.y || _y > _max_pt.y){_y = c_y;}
+    if(_x < _min_pt.x || _x > _max_pt.x){
+        _x = c_x;
+        std::cerr << "\n" << "WARNING: Target point out of bound: " << _min_pt.x << " < " << _x << " < " << _max_pt.x << "\n";
+        std::cerr << "Point automatically centered to avoid issues\n\n";
+    }
+    if(_y < _min_pt.y || _y > _max_pt.y){
+        _y = c_y;
+        std::cerr << "WARNING: Target point out of bound: " << _min_pt.y << " < " << _y << " < " << _max_pt.y << "\n";
+        std::cerr << "Point automatically centered to avoid issues\n\n";
+    }
 }
 
 void saveToCSV(
@@ -597,8 +605,8 @@ void view(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> _clouds){
 int main(int argc, char* argv[]) {
     // std::cerr << "Number of args received: " << argc << "\n";
 
-    std::string ply_file_path = "../inputs/rtabmap_cloud_0.ply";
-    std::string output_csv_path = "../outputs/output_pcl_0.csv";
+    std::string ply_file_path = "../inputs/rtabmap_cloud.ply";
+    std::string output_csv_path = "../outputs/output_pcl.csv";
     float landing_x = 15.50081099;
     float landing_y = 3.76794873;
     float df_x = 15.0;
