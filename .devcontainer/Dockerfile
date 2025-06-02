@@ -87,5 +87,3 @@ ENV PROJ_LIB=/opt/conda/share/proj
 WORKDIR $WS
 RUN conda run -n docker pip install rasterio && \
     conda run -n docker pip install pyproj
-
-RUN 
